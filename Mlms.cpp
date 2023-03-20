@@ -55,10 +55,10 @@ double precalculation(double a, double b, double x, double y) {
   fourth = (y - b) * log(fourth);
   // printf("%.2f \n", fourth);
   // printf("%.2f , %.2f, %.2f, %.2f",first,second,third,fourth );
-  // if (std::isnan(first)) first = 0;
-  // if (std::isnan(second)) second = 0;
-  // if (std::isnan(third)) third = 0;
-  // if (std::isnan(fourth)) fourth = 0;
+  if (std::isnan(first)) first = 0;
+  if (std::isnan(second)) second = 0;
+  if (std::isnan(third)) third = 0;
+  if (std::isnan(fourth)) fourth = 0;
   double res = (first+second+third+fourth);
   return res;
 }
@@ -68,12 +68,14 @@ double run_grid(std::vector<std::vector<double>> array,
                 std::vector<std::vector<double>> pressure,
                 double y, double x, int grid_a,
                 int grid_b, double a, double b , double v,
-                double E) {
+                double E, double cell_x, double cell_y) {
   double res = 0;
 
   for (int i = 0; i < grid_b; i+=1) {
     for (int j = 0; j < grid_a; j+=1) {
-      res += precalculation(a, b, std::abs(y-i), std::abs(x-j)) * (1/(PI*E)) * pressure[i][j];
+      res += precalculation(a, b, std::abs(x-j)*cell_x, 
+                            std::abs(y-i)*cell_y) *
+                            (1/(PI*E)) * pressure[i][j];
       // if (j == 10) printf("%2.f \n", res);
     }
   }

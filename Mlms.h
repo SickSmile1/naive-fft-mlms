@@ -12,7 +12,8 @@ double run_grid(std::vector<std::vector<double>> array,
                 std::vector<std::vector<double>> pressure,
                 double y, double x,
                 int grid_a, int grid_b, double a,
-                double b, double v, double E);
+                double b, double v, double E,
+                double cell_x, double cell_y);
 
 double precalculation(double a, double b, double x, double y);
 
