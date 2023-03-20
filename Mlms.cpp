@@ -1,8 +1,8 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
+#include <fstream>
 #include <cmath>
 #include <vector>
-#include <fstream>
-// #include "./Mlms.h"
+#include "./Mlms.h"
 
 const double PI = 3.141592653589793238463;
 
@@ -20,10 +20,10 @@ const double PI = 3.141592653589793238463;
 
 // __________________________________________________________________
 void printarray(std::vector<std::vector<double>> array,
-                 size_t grid_a, size_t grid_b) {
-  for (size_t i = 0; i < grid_b; i++) {
-    for (size_t j = 0; j < grid_a; j++) {
-      printf("%.2f\t", array[i][j]);
+                 double grid_a, double grid_b) {
+  for (int i = 0; i < grid_b; i++) {
+    for (int j = 0; j < grid_a; j++) {
+      printf("%.1f\t", array[i][j]);
     }
     printf("\n");
   }
@@ -32,8 +32,7 @@ void printarray(std::vector<std::vector<double>> array,
 
 
 // __________________________________________________________________
-double precalculation(double a, double b, double x, double y,
-                       double v, double E, double pressure) {
+double precalculation(double a, double b, double x, double y) {
   double first, second, third, fourth;
 
   first = ((y + b) + sqrt(pow((y + b), 2) + pow((x + a), 2))) /
@@ -55,23 +54,27 @@ double precalculation(double a, double b, double x, double y,
             ((x + a) + sqrt(pow((y - b), 2) + pow((x - a), 2)));
   fourth = (y - b) * log(fourth);
   // printf("%.2f \n", fourth);
-  //  printf("%.2f , %.2f, %.2f, %.2f",first,second,third,fourth );
-  double res = (first+second+third+fourth)*(1 /  // (1-pow(v, 2) ) /
-                (PI*E)) * pressure;
-  if (std::isnan(res)) res = 0;
+  // printf("%.2f , %.2f, %.2f, %.2f",first,second,third,fourth );
+  // if (std::isnan(first)) first = 0;
+  // if (std::isnan(second)) second = 0;
+  // if (std::isnan(third)) third = 0;
+  // if (std::isnan(fourth)) fourth = 0;
+  double res = (first+second+third+fourth);
   return res;
 }
 
 // __________________________________________________________________
-double run_grid(std::vector<std::vector<double>> array, size_t y,
-                size_t x, double pressure, double grid_a,
-                double grid_b, double a, double b , double v,
+double run_grid(std::vector<std::vector<double>> array,
+                std::vector<std::vector<double>> pressure,
+                double y, double x, int grid_a,
+                int grid_b, double a, double b , double v,
                 double E) {
   double res = 0;
-  for (size_t i = 0; i < grid_b; i++) {
-    for (size_t j = 0; j < grid_a; j++) {
-      res += precalculation(a, b, x-j, y-i, v, E, pressure);
-      // printf("%2.f", res);
+
+  for (int i = 0; i < grid_b; i+=1) {
+    for (int j = 0; j < grid_a; j+=1) {
+      res += precalculation(a, b, std::abs(y-i), std::abs(x-j)) * (1/(PI*E)) * pressure[i][j];
+      // if (j == 10) printf("%2.f \n", res);
     }
   }
   return res;

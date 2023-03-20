@@ -9,6 +9,6 @@
 }*/
 
 TEST(MLMS, precalculation) {
-  const double PI = 3.141592653589793238463;
-  ASSERT_EQ(0, precalculation(5., 5., 5., 5., 1., 1., 1.));
+  double res = 16.731751079260256;
+  ASSERT_DOUBLE_EQ(res, precalculation(7.5, 7.5, 1., 1.));
 }
