@@ -2,26 +2,59 @@
 /* Using lava/matplotlib-cpp for Matplotlib */
 
 #include <cstdio>
+#include <string>
+#include <sstream>
+#include <iostream>
 // #include "matplotlibcpp.h"
 #include <omp.h>
 #include "./Mlms.h"
 
-int main() {
-  std::vector<std::vector<double>> Ic;
-  std::vector<std::vector<double>> Pa;
+int main(int argc, char* argv[]) {
+  std::stringstream strs1;
+  
+  if (argc == 1) {
+    strs1 << "200" << std::endl;
+    strs1 << "100" << std::endl;
+    strs1 << "50" << std::endl;
+    strs1 << "0" << std::endl;
+    strs1 << "1" << std::endl;
+    std::cout << "running test with parameters:" << std::endl;
+    std::cout<<"size:"<<200<<" size_p:"<<100
+      <<" grid:"<<50<<" v:"<<0<<" E:"<<1<<std::endl;
 
-  std::vector<double> help;
-  double size = 1000;
+  } else if(argc > 1 && argc <5){
+    std::cout << "not enough parameters. 5 numbers needed!";
+    std::cout <<"\n<double>Size\n<double>pressure patch size\n";
+    std::cout << "<int>grid size\n<double>v\n<double>E" << std::endl;
+  } else {
+    for(int i = 1; i < argc;i++) {
+      strs1 << argv[i] << std::endl;
+    }
+  }
 
-  double size_p = 500;
+  double size;
+  strs1 >> size;
 
-  int grid = 500;
+  double size_p;
+  strs1 >> size_p;
+
+  int grid;
+  strs1 >> grid;
 
   double cell_size = size/grid;
 
-  double v = 0;
-  double E = 1;
+  double v;
+  strs1 >> v;
+  double E;
+  strs1 >> E;
 
+  return 0;
+
+  std::vector<std::vector<double>> Ic;
+  std::vector<std::vector<double>> Pa;
+  
+  std::vector<double> help;
+  
   help.clear();
   Ic.clear();
   Pa.clear();
