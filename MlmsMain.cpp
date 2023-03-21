@@ -1,6 +1,8 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
+/* Using lava/matplotlib-cpp for Matplotlib */
 
 #include <cstdio>
+// #include "matplotlibcpp.h"
 #include <omp.h>
 #include "./Mlms.h"
 
@@ -9,36 +11,32 @@ int main() {
   std::vector<std::vector<double>> Pa;
 
   std::vector<double> help;
-  double size_x = 100;
-  double size_y = 100;
+  double size = 200;
 
-  double size_p_x = 50;
-  double size_p_y = 50;
+  double size_p = 100;
 
-  int grid_x = 100;
-  int grid_y = 100;
+  int grid = 20;
 
-  double cell_size_x = size_x/grid_x;
-  double cell_size_y = size_y/grid_y;
+  double cell_size = size/grid;
 
-  double a = size_p_x/2;
-  double b = size_p_y/2;
-  double v = 1;
+  double v = 0;
   double E = 1;
 
   help.clear();
   Ic.clear();
   Pa.clear();
-  for (int i = 0; i < grid_y; i++) {
-    for (int j = 0; j < grid_x; j++) help.push_back(0.);
+  for (int i = 0; i < grid; i++) {
+    for (int j = 0; j < grid; j++) help.push_back(0.);
     Ic.push_back(help);
     help.clear();
   }
-
+  double lower_b = ((size/grid)*(size_p/cell_size));
+  double upper_b = ((size/grid)+(size_p/cell_size));
+  printf("%.1f lower, %.1f uppwe \n", lower_b, upper_b);
   // initialize pressure array
-  for (int i = 0; i < grid_y; i++) {
-    for (int j = 0; j < grid_x; j++) {
-      if (j >= 25 && i >= 25 && j < 75 && i < 75) {
+  for (int i = 0; i < grid; i++) {
+    for (int j = 0; j < grid; j++) {
+      if (j >= lower_b && i >= lower_b && j < upper_b && i < upper_b) {
         help.push_back(1.0);
       } else {
         help.push_back(0.);
@@ -53,12 +51,12 @@ int main() {
   // printarray(Pa, grid_x, grid_y);
   // run calculation loops
   #pragma omp parallel for
-  for (int i = 0; i < grid_y; i++) {
-    for (int j = 0; j < grid_x; j++) {
-      Ic[i][j] = run_grid(Ic, Pa, i, j, grid_x, grid_y, a, b, v, E,
-                          cell_size_x, cell_size_y);
+  for (int i = 0; i < grid; i++) {
+    for (int j = 0; j < grid; j++) {
+      Ic[i][j] = run_grid(Pa, i, j, grid, cell_size/2, cell_size/2, v, E,
+                          cell_size);
     }
   }
 
-  printarray(Ic, grid_x, grid_y);
+  printarray(Ic);
 }
