@@ -11,11 +11,11 @@ int main() {
   std::vector<std::vector<double>> Pa;
 
   std::vector<double> help;
-  double size = 200;
+  double size = 1000;
 
-  double size_p = 100;
+  double size_p = 500;
 
-  int grid = 20;
+  int grid = 500;
 
   double cell_size = size/grid;
 
@@ -30,8 +30,8 @@ int main() {
     Ic.push_back(help);
     help.clear();
   }
-  double lower_b = ((size/grid)*(size_p/cell_size));
-  double upper_b = ((size/grid)+(size_p/cell_size));
+  double lower_b = (size/cell_size)/2 - (size_p/cell_size)/2;
+  double upper_b = (size/cell_size)/2 + (size_p/cell_size)/2;
   printf("%.1f lower, %.1f uppwe \n", lower_b, upper_b);
   // initialize pressure array
   for (int i = 0; i < grid; i++) {
