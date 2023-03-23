@@ -16,21 +16,29 @@ struct matrix{
   double& operator() (std::size_t i, std::size_t j) {
     return data[j+(i*shape[1])];
   }
-  
+
   const double& operator() (std::size_t i, std::size_t j) const {
     return data[j+(i*shape[1])];
   }
 };
 
-void printarray(const matrix &array);
+void initializePressureArray(matrix &Pa, double lower_b,
+                             double upper_b, double pressure);
 
-double run_grid(const matrix &pressure,
+void initializeDisplacementArray(matrix &Ic);
+
+void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size,
+                 double v, double E);
+
+double calc_displacement(const matrix &pressure,
+                const matrix &Ic,
                 double y, double x,
-                int grid, double a,
-                double b, double v, double E,
+                double a, double b,
+                double v, double E,
                 double cell);
 
-double precalculation(double a, double b, double x, double y);
+double calculate(double a, double b, double x, double y);
 
+void printarray(const matrix &array);
 
 #endif  // MLMS_H_

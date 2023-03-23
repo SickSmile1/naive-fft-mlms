@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include "./Mlms.h"
+#include "./MlmsTimer.h"
 
 int main(int argc, char* argv[]) {
   std::stringstream strs1;
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  double size;
+ /*  double size;
   strs1 >> size;  // default: 200
 
   std::size_t size_p;
@@ -47,49 +48,19 @@ int main(int argc, char* argv[]) {
   double E;
   strs1 >> E;  // default: 1
 
-  // return 0;
-
-  /*std::vector<std::vector<double>> Ic;
-  std::vector<std::vector<double>> Pa;
-
-  std::vector<double> help;
-
-  help.clear();
-  Ic.clear();
-  Pa.clear();*/
   matrix Ic({grid, grid});
   matrix Pa({grid, grid});
 
-  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
-    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
-      Ic(i, j) = 0;
-    }
-  }
+  double pressure = 1;
   double lower_b = (size/cell_size)/2 - (size_p/cell_size)/2;
   double upper_b = (size/cell_size)/2 + (size_p/cell_size)/2;
-  printf("%.1f lower, %.1f uppwe \n", lower_b, upper_b);
-  // initialize pressure array
-  for (std::size_t i = 0; i < Pa.shape[0]; i++) {
-    for (std::size_t j = 0; j < Pa.shape[1]; j++) {
-      if (j >= lower_b && i >= lower_b && j < upper_b && i < upper_b) {
-        Pa(i, j) = 1;
-      } else {
-        Pa(i, j) = 0;
-      }
-    }
-  }
 
-  // printarray(Ic, grid_x, grid_y);
+  initializePressureArray(Pa, lower_b, upper_b, pressure);
+  initializeDisplacementArray(Ic);
 
-  // printarray(Pa, grid_x, grid_y);
   // run calculation loops
-  // #pragma omp parallel for
-  for (std::size_t i = 0; i < grid; i++) {
-    for (std::size_t j = 0; j < grid; j++) {
-      Ic(i, j) = run_grid(Pa, i, j, grid, cell_size/2, cell_size/2, v, E,
-                          cell_size);
-    }
-  }
+  calculation_loop(Ic, Pa, cell_size, grid, v, E);
 
-  printarray(Ic);
+  printarray(Ic); */
+  runTimerLoops();
 }

@@ -3,25 +3,20 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
+#include <string>
 #include "MlmsWriteToFile.h"
+#include "Mlms.h"
 
-void writeVecToFile(std::vector<double> arr) {
+void writeToFile(const matrix &arr, const std::string name) {
   std::ofstream file;
-  file.open("vectorResult.txt");
-  int size = sqrt(arr.size());
-  int row = 0;
-  for (int i = 0; i < arr.size(); i++) {
-    file << (i%size)*size+(i/size)*size;
+  file.open(name);
+  for (std::size_t i = 0; i < arr.shape[0]; i++) {
+    for (std::size_t j = 0; j < arr.shape[1]; j++) {
+      file << arr(i, j);
+      file << "\t";
+    }
+    file << std::endl;
   }
-  file << "Writing this to a file." << std::endl;
-  file.close();
-  return;
-}
-
-void writeTimeToFile(std::vector<double> arr) {
-  std::ofstream file;
-  file.open("timeToCompute.txt");
-  file << "Writing this to a file." << std::endl;
   file.close();
   return;
 }

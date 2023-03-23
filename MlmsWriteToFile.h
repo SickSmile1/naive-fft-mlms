@@ -4,9 +4,9 @@
 #define MLMSWRITETOFILE_H_
 
 #include <vector>
+#include <string>
+#include "Mlms.h"
 
-void writeVecToFile(std::vector<double> arr);
-
-void writeTimeToFile(std::vector<double> arr);
+void writeToFile(const matrix &arr, const std::string name);
 
 #endif  // MLMSWRITETOFILE_H_
