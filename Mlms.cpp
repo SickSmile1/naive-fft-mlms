@@ -1,5 +1,6 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 #include <fstream>
+#include <iostream>
 #include <cmath>
 #include <vector>
 #include <array>
@@ -41,7 +42,7 @@ void initializeDisplacementArray(matrix &Ic) {
   }
 }
 // __________________________________________________________________
-double calculate(double a, double b, double x, double y) {
+inline double calculate(double a, double b, double x, double y) {
   double first, second, third, fourth;
   // naive formula implementation for calculating a pressure patch
   first = ((y + b) + sqrt(pow((y + b), 2) + pow((x + a), 2))) /
@@ -98,8 +99,8 @@ void calculation_loop(matrix &Ic, const matrix &Pa,
   // outer loop over grid to call displacement calculation
   // for parallelisation uncomment, compiler option needed: -fopen
   // #pragma omp parallel for
-  for (int i = 0; i < Ic.shape[0]; i++) {
-    for (int j = 0; j < Ic.shape[1]; j++) {
+  for (int i = 0; i < static_cast<int>(Ic.shape[0]); i++) {
+    for (int j = 0; j < static_cast<int>(Ic.shape[1]); j++) {
       Ic(i, j) = calc_displacement(Pa, Ic, i, j, cell_size/2,
                           cell_size/2, v, E, cell_size);
     }
@@ -114,8 +115,8 @@ double calc_displacement(const matrix &pressure,
                 double E, double cell) {
   double res = 0;
 
-  for (int i = 0; i < Ic.shape[0]; i+=1) {
-    for (int j = 0; j < Ic.shape[1]; j+=1) {
+  for (int i = 0; i < static_cast<int>(Ic.shape[0]); i+=1) {
+    for (int j = 0; j < static_cast<int>(Ic.shape[1]); j+=1) {
       res += calculate(a, b, (x-j)*cell, (y-i)*cell) *
                             ((1-v)/(PI*E)) * pressure(i, j);
     }
