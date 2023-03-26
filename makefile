@@ -1,4 +1,4 @@
-CXX = g++ -O3 -Wall -pedantic -fopenmp -std=c++20 -lpthread
+CXX = g++ -O3 -Wall -pedantic -fno-omit-frame-pointer -std=c++20 -lpthread
 # CXX = g++ -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))

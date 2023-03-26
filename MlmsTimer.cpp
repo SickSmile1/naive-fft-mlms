@@ -13,7 +13,7 @@ void runTimerLoops() {
   const double size = 1000;
 
   const std::size_t size_p = 500;
-  std::size_t grid = 20;
+  std::size_t grid = 50;
 
   const double v = 0;
   const double E = 1;
@@ -21,7 +21,7 @@ void runTimerLoops() {
   matrix result({10, 20});
   std::vector<matrix> matrix_results;
   int iteration;
-  for (iteration = 0; iteration < 16; iteration++) {
+  for (iteration = 0; iteration < 1; iteration++) {
     double cell_size = size/grid;
 
     matrix Ic({grid, grid});
