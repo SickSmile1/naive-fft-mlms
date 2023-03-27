@@ -1,10 +1,10 @@
-CXX = g++ -O3 -Wall -pedantic -std=c++20 -lpthread -fno-omit-frame-pointer -mtune=native -march=native
+CXX = g++ -O3 -Wall -pedantic -fno-omit-frame-pointer -std=c++14 -flto -march=native -fno-exceptions -fno-rtti
 # CXX = g++ -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))
-HEADERS = $(wildcard *.h)
+HEADERS = $(wildcard *.h) 
 OBJECTS = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard *.cpp))))
-LIBRARIES =
+LIBRARIES = -isystem  benchmark\include -lbenchmark
 
 .PRECIOUS: %.o
 .SUFFIXES:
@@ -25,6 +25,8 @@ clean:
 	rm -f $(MAIN_BINARIES)
 	rm -f $(TEST_BINARIES)
 	rm -f *.plain
+	rm -f *.gcda
+	rm -f perf.data*
 
 %Main: %Main.o $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBRARIES)
@@ -35,5 +37,6 @@ clean:
 %.o: %.cpp $(HEADERS)
 	$(CXX) -c $<
 
-valgrind:
-	valgrind -s --tool=callgrind ./$(basename $(wildcard *Main.cpp))
+Profile:
+	sudo perf record -g ./$(basename $(wildcard *Main.cpp))
+	sudo perf report -g 'graph,0.5,caller'

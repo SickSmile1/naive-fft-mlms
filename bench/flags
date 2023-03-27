@@ -1,0 +1,10 @@
+-O3
+-std=c++14
+-Wall
+-fno-rtti
+-fno-exceptions
+-pedantic
+-pthreads
+-fomit-frame-pointer
+-mtune=native
+-march=native 
