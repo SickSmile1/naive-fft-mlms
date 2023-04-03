@@ -25,6 +25,8 @@ struct matrix{
 void initializePressureArray(matrix &Pa, double lower_b,
                              double upper_b, double pressure);
 
+void initializeRandomPressureArray(matrix &Pa);
+
 void initializeDisplacementArray(matrix &Ic);
 
 void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size,

@@ -1,6 +1,6 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 #include <fstream>
-// #include <iostream>
+#include <iostream>
 #include <cmath>
 #include <vector>
 #include "./Mlms.h"
@@ -25,6 +25,17 @@ void initializePressureArray(matrix &Pa, double lower_b,
   for (std::size_t i = lower_b; i < upper_b; i++) {
     for (std::size_t j = lower_b; j < upper_b; j++) {
       Pa(i, j) = pressure;
+    }
+  }
+}
+
+// __________________________________________________________________
+void initializeRandomPressureArray(matrix &Pa) {
+  initializeDisplacementArray(Pa);
+  const double eps = 0.92457;
+  for (std::size_t i = 0; i < Pa.shape[0]; i++) {
+    for (std::size_t j = 0; j < Pa.shape[1]; j++) {
+      Pa(i, j) = (rand() % 5) * eps;
     }
   }
 }
@@ -68,9 +79,9 @@ void calculation_loop(matrix &Ic, const matrix &Pa,
                 double v, double E) {
   // outer loop over grid to call displacement calculation
   // for parallelisation uncomment, compiler option needed: -fopen
-  // #pragma omp parallel for
-  for (int i = 0; i < static_cast<int>(Ic.shape[0]); i++) {
-    for (int j = 0; j < static_cast<int>(Ic.shape[1]); j++) {
+  #pragma omp parallel for simd
+  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
+    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = calc_displacement(Pa, Ic, i, j, cell_size/2,
                           cell_size/2, v, E, cell_size);
     }
@@ -85,9 +96,12 @@ double calc_displacement(const matrix &pressure,
                 double E, double cell) {
   double res = 0;
 
-  for (int i = 0; i < static_cast<int>(Ic.shape[0]); i+=1) {
-    for (int j = 0; j < static_cast<int>(Ic.shape[1]); j+=1) {
-      res += calculate(a, b, (x-j)*cell, (y-i)*cell) *
+  for (std::size_t i = 0; i < Ic.shape[0]; i+=1) {
+    for (std::size_t j = 0; j < Ic.shape[1]; j+=1) {
+      double xj = (x*cell)-(j*cell);
+      double yi = (y*cell)-(i*cell);
+      // std::cout << "xi: " << xj << " yi: " << yi << std::endl;
+      res += calculate(a, b, xj, yi) *
                             ((1-v)/(PI*E)) * pressure(i, j);
     }
   }

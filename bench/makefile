@@ -1,4 +1,4 @@
-CXX = g++ -O3 -Wall -pedantic -fno-omit-frame-pointer -std=c++14 -flto -march=native -fno-exceptions -fno-rtti
+CXX = g++ -O3 -Wall -pedantic -std=c++20 -mtune=native -march=native -fopenmp -fno-exceptions -fno-rtti
 # CXX = g++ -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))

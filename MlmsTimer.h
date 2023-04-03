@@ -5,6 +5,8 @@
 #include <chrono> //NOLINT
 
 struct MeasureTime{
+  // time measurement struct for calculations
+  // accurate until ,000x order
   std::chrono::_V2::steady_clock::time_point start;
   std::chrono::_V2::steady_clock::time_point stop;
   double duration;
@@ -19,6 +21,11 @@ struct MeasureTime{
   }
 };
 
+// function calling the calculation with different grid sizes
+// for the purpose of time measurement, saving the resulting matrix
+// as 
+//  xx_grid.txt -> xx being the grid size
+//  timing.txt  -> gridsize \t time
 void runTimerLoops();
 
 #endif  // MLMSTIMER_H_
