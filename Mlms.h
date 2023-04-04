@@ -59,7 +59,11 @@ double calc_displacement(const matrix &pressure,
 void printarray(const matrix &array);
 
 // coarse pressure array calculation
-void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP, std::size_t t);
+void calc_coarse_pressure(const matrix &fP, const matrix &st,
+                          matrix &cP, std::size_t t);
+
+void calc_K(matrix &Ic, double v1, double v2, double PI,
+                double E1, double E2);
 
 // initialization with 1 for all elements
 void initializeMultiplicationArray(matrix &Ic);
