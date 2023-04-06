@@ -79,10 +79,10 @@ void calculation_loop(matrix &Ic, const matrix &Pa,
 
 // __________________________________________________________________
 double calc_displacement(const matrix &pressure,
-                const matrix &Ic,
-                double y, double x,
-                double a, double b , double v,
-                double E, double cell) {
+              const matrix &Ic,
+              double y, double x,
+              double a, double b , double v,
+              double E, double cell) {
   double res = 0;
 
   for (std::size_t i = 0; i < Ic.shape[0]; i+=1) {
@@ -95,4 +95,267 @@ double calc_displacement(const matrix &pressure,
     }
   }
   return res;
+}
+
+// __________________________________________________________________
+void initializeMultiplicationArray(matrix &Ic) {
+  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
+    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
+      Ic(i, j) = 1;
+    }
+  }
+}
+
+// __________________________________________________________________
+void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP,
+                          std::size_t ts) {
+  int t = ts;
+  for (std::size_t m = 0+t; m < cP.shape[0]; m++) {
+    for (std::size_t n = 0+t; n < cP.shape[1]; n++) {
+      int i = 2*(m-t+1);
+      int j = 2*(n-t+1);
+      // cP(m,n) = 0;
+
+      double c_pressure;
+      if (i < fP.shape[0] && j < fP.shape[1]) {
+        c_pressure = fP(i, j);
+      } else {
+        c_pressure = 0;
+      }
+      for (int k = 1; k < 2 * t; k++) {
+        int pi = i+2*(k-t)-1;
+        if (pi > 0 && pi < fP.shape[0] && j < fP.shape[1]) {
+          c_pressure += st(k, 0)*fP(pi, j);
+        }
+      }
+      for (int l = 1; l < 2 * t; l++) {
+        int pj = j+2*(l-t)-1;
+        if (pj > 0 && pj < fP.shape[1] && i < fP.shape[0]) {
+          c_pressure += st(l, 0)*fP(i, pj);
+        }
+      }
+
+      for (int k = 1; k < 2 * t; k++) {
+        for (int l = 1; l < 2 * t; l++) {
+          int si = i+2*(k-t)-1;
+          int sj = j+2*(l-t)-1;
+          if (si > 0 && sj > 0 && si < fP.shape[0] && sj < fP.shape[1]) {
+            c_pressure += st(k, 0) * st(l, 0) * fP(si, sj);
+          }
+        }
+      }
+      cP(m, n) += c_pressure;
+    }
+  }
+}
+
+// __________________________________________________________________
+void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
+                        std::vector<std::size_t> &gridLen2,
+                        std::vector<std::size_t> &coarseGrid,
+                        const std::size_t shape,
+                        const std::size_t ts) {
+  int t = ts;
+  double sizeN = shape*shape;
+  double sqrt_sizeN = shape;
+
+  std::size_t newGrid1 = shape/2 + 2*t - 1;
+  std::size_t newGrid2 = shape/2 + 2*t - 1;
+
+  coarseGrid.reserve(120);
+  gridLen1.reserve(120);
+  gridLen2.reserve(120);
+
+  while (sizeN > sqrt_sizeN) {
+    sizeN = newGrid1 * newGrid2;
+    newGrid1 = newGrid1/2 + 2*t - 1;
+    newGrid2 = newGrid2/2 + 2*t - 1;
+    coarseGrid.push_back(sizeN);
+    gridLen1.push_back(newGrid1);
+    gridLen2.push_back(newGrid2);
+    // std::cout << sizeN << std::endl;
+  }
+  coarseGrid.shrink_to_fit();
+  gridLen1.shrink_to_fit();
+  gridLen2.shrink_to_fit();
+}
+
+// __________________________________________________________________
+void transferCoarseGrid(matrix &kM, const double mc, const matrix &st,
+                        const std::size_t ts, const double fineSizeA,
+                        const double fineSizeB) {
+  int t = ts;
+  for (int i = -mc+1; i < mc; i++) {
+    for (int j = -mc+1; j < mc; j++) {
+      bool iEven = (i % 2 == 0);
+      bool jEven = (j % 2 == 0);
+
+      double K;
+      // odd i, even j
+      double res = 0;
+      for (int k = 1; k <= 2*t; k++) {
+        int pi = i - 2 * (k - t) + 1;
+        K = calculate(fineSizeA, fineSizeB, pi, j);
+        res += st(k, 0) * K;
+      }
+
+      // even i, odd j
+      double res1 = 0;
+      for (int l = 1; l <= 2*t; l++) {
+        int pj = j - 2 * (l - t) + 1;
+        K = calculate(fineSizeA, fineSizeB, i, pj);
+        res1 += st(l, 0) * K;
+      }
+
+      // odd i, j
+      double res2 = 0;
+      for (int l = 1; l <= 2*t; l++) {
+        for (int k = 1; k <= 2*t; k++) {
+          int pj = j - 2 * (l - t) + 1;
+          int pi = i - 2 * (k - t) + 1;
+          K = calculate(fineSizeA, fineSizeB, pi, pj);
+          res1 += st(l, 0) * K;
+        }
+      }
+      double result = 0;
+      K = calculate(fineSizeA, fineSizeB, i, j);
+      result += (jEven*!iEven) * (K - res);
+      result += (!jEven*iEven) * (K - res1);
+      result += (!jEven*iEven) * (K - res2);
+      kM(i, j) = result*(jEven*iEven);
+    }
+  }
+}
+
+void deflectionCorrection(matrix &kM, const double mc,
+                          const matrix &cC, const matrix &cP,
+                          const std::size_t ts) {
+  int t = ts;
+  for (int i = 0; i < kM.shape[0]; i++) {
+    for (int j = 0; j < kM.shape[1]; j++) {
+      // summation over -mc <= k/l <= mc
+      for (int k = -mc+1; i < mc; i++) {
+        for (int l = -mc+1; j < mc; j++) {
+          int pi = 2 * (i - t + 1) - k;
+          int pj = 2 * (j - t + 1) - l;
+          std::cout << "startin correction\n";
+          kM(i, j) += cC(k+mc-1, l+mc-1) * cP(pi, pj);
+        }
+      }
+    }
+  }
+}
+
+
+void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
+                      const std::size_t ts) {
+  int t = ts;
+  for (std::size_t i = 0; i < kM.shape[0]; i++) {
+    for (std::size_t j = 0; j < kM.shape[1]; j++) {
+      bool iEven = (i % 2 == 0);
+      bool jEven = (j % 2 == 0);
+      int m = (i + 1)/2 + t - 1;
+      int n = (j + 1)/2 + t - 1;
+
+      int res0 = 0;
+      for (int k = 1; k < 2*t; k++) {
+        int pi = m + k - t - 1;
+        if (pi >= 0 && pi< cM.shape[0] && n < cM.shape[1]) {
+          res0 += st(k-1, 0) * cM(pi, n);
+        }
+      }
+      int res1 = 0;
+      for (int l = 1; l < 2*t; l++) {
+        int pj = n + l - t - 1;
+        if (pj >= 0 && pj < cM.shape[1] && m < cM.shape[0]) {
+          res1 += st(l-1, 0) * cM(m, pj);
+        }
+      }
+      int res2 = 0;
+      for (int k = 1; k < 2*t; k++) {
+        for (int l = 1; l < 2*t; l++) {
+          int pi = m + k - t - 1;
+          int pj = n + l - t - 1;
+          if (pi >= 0 && pj >= 0 && pi < cM.shape[0] && pj < cM.shape[1]) {
+            res2 += st(k-1, 0) * st(l-1, 0) * cM(pi, pj);
+          }
+        }
+      }
+      double result = 0;
+      result += (!iEven*jEven)*res0;
+      result += (iEven*!jEven)*res1;
+      result += (!iEven*jEven)*res2;
+      result += (iEven*jEven)*kM(i, j);
+      kM(i, j) = result;
+    }
+  }
+}
+
+void fineGridCorrection(matrix &kM, const matrix &st,
+                  const double mc, const std::size_t ts,
+                  const matrix fP) {
+  int t = ts;
+  matrix cC1({2*mc, 2*mc});
+  initializeDisplacementArray(cC1);
+  matrix cC2({2*mc, 2*mc});
+  matrix cC3({2*mc, 2*mc});
+  matrix cC4({2*mc, 2*mc});
+
+  for (int i = -mc; i < mc; i++) {
+    for (int j = -mc; j < mc; j++) {
+      bool iEven = (i % 2 == 0);
+      bool jEven = (j % 2 == 0);
+
+      int res0 = 0;
+      for (int k = 1; k < 2*t; k++) {
+        int pi = i + 2 * (k - t) - 1;
+        if (pi >= 0 && pi < kM.shape[0] && i < kM.shape[1]) {
+          res0 += st(k-1, 0) * kM(pi, j);
+        }
+      }
+      int res1 = 0;
+      for (int l = 1; l < 2*t; l++) {
+        int pj = j + 2 * (l - t) - 1;
+        if (pj >= 0 && pj < kM.shape[1] && j < kM.shape[0]) {
+          res1 += st(l-1, 0) * kM(i, pj);
+        }
+      }
+      int res2 = 0;
+      for (int k = 1; k < 2*t; k++) {
+        for (int l = 1; l < 2*t; l++) {
+          int pi = i + 2 * (k - t) - 1;
+          int pj = j + 2 * (l - t) - 1;
+          if (pi >= 0 && pj >= 0 && pi < kM.shape[0] && pj < kM.shape[1]) {
+            res2 += st(k-1, 0) * st(l-1, 0) * kM(pi, pj);
+          }
+        }
+      }
+      cC2(i, j) = kM(i, j) - ((!iEven*jEven) * res0);
+      cC3(i, j) = kM(i, j) - ((iEven*!jEven) * res1);
+      cC4(i, j) = kM(i, j) - ((!iEven*jEven) * res2);
+    }
+  }
+
+  for (std::size_t i = 0; i < kM.shape[0]; i++) {
+    for (std::size_t j = 0; j < kM.shape[1]; j++) {
+      bool iEven = (i % 2 == 0);
+      bool jEven = (j % 2 == 0);
+
+      matrix &c = cC1;
+      if (!iEven*jEven) c = cC2;
+      else if (iEven*!jEven) c = cC3;
+      else if (!iEven*jEven) c = cC4;
+      double res = 0;
+      for (int k = -mc; k < mc; k++) {
+        for (int l = -mc; l < mc; l++) {
+          int pi = i - k;
+          int pj = j - l;
+          if (pi > 0 && pj > 0 && pi < fP.shape[0] && pj < fP.shape[1]) {
+            res += c(k, l)* fP(pi, pj);
+          }
+        }
+      }
+      kM(i, j) = kM(i, j) + res;
+    }
+  }
 }

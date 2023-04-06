@@ -23,7 +23,7 @@ struct MeasureTime{
 
 // function calling the calculation with different grid sizes
 // for the purpose of time measurement, saving the resulting matrix
-// as 
+// as
 //  xx_grid.txt -> xx being the grid size
 //  timing.txt  -> gridsize \t time
 void runTimerLoops();

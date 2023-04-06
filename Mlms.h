@@ -19,14 +19,14 @@ struct matrix{
 
   // overload () for aquiring (conversion) i,j idexes in 1d array
   double& operator() (std::size_t i, std::size_t j) {
-    assert(i < shape[0] and j < shape[1]);
+    assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 
   // overload () for aquiring (conversion) i,j indexes in 1d array
   // in static form
   const double& operator() (std::size_t i, std::size_t j) const {
-    assert(i < shape[0] and j < shape[1]);
+    assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 };
@@ -62,10 +62,29 @@ void printarray(const matrix &array);
 void calc_coarse_pressure(const matrix &fP, const matrix &st,
                           matrix &cP, std::size_t t);
 
-void calc_K(matrix &Ic, double v1, double v2, double PI,
-                double E1, double E2);
-
 // initialization with 1 for all elements
 void initializeMultiplicationArray(matrix &Ic);
 
+// calculate the sizes for the coarse grids
+void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
+                std::vector<std::size_t> &gridLen2,
+                std::vector<std::size_t> &coarseGrid,
+                const std::size_t shape,
+                const std::size_t t);
+
+
+void deflectionCorrection(matrix &kM, const double mc,
+                const matrix &cC, const matrix &cP, const std::size_t t);
+
+void transferCoarseGrid(matrix &correctionCoefficients, const double mc,
+                const matrix &st, const std::size_t t,
+                const double fineSizeA, const double fineSizeB);
+
+
+void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
+                const std::size_t t);
+
+void fineGridCorrection(matrix &kM, const matrix &st,
+               const double mc, const std::size_t ts,
+               const matrix fP);
 #endif  // MLMS_H_

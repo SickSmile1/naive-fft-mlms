@@ -43,7 +43,7 @@ void runTimerLoops() {
     std::string name = std::to_string(grid);
     name += "_grid";
 
-    //writeToFile(Ic, name);
+    // writeToFile(Ic, name);
     grid += 20;
   }
   writeToFile(result, "timings.txt");
