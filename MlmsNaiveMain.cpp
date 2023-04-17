@@ -13,9 +13,9 @@ int main() {
   const std::size_t size_p = 250;
   double pressure = 1.;
 
-  // initial grid size forinitialization
-  std::size_t grid1 = 200;
-  std::size_t grid2 = 200;
+  // initial grid size for initialization
+  std::size_t grid1 = 260;
+  std::size_t grid2 = 260;
 
   double fineSizeA = size / grid1;
   double fineSizeB = size / grid2;
@@ -38,6 +38,9 @@ int main() {
   double min_g = std::min(grid1, grid2);
   std::size_t t = beta*log(min_g);
   double mc = 0.7* pow(min_g, 1/t)-1;
+  if (mc < 2*t) {
+    mc = 2*t;
+  }
   double eps = pow(min_g, (-3/2));
 
   double warnings = eps + size + size_p + pressure + delta + g_old + mc;
@@ -50,15 +53,15 @@ int main() {
     for (std::size_t j = 1; j <= 2*t; j++) {
       if (j != i) {
         // std::cout << st(i, 0) << " : ";
-        double divider = (2*t-2*j)+1;
-        double divisor = (2*i-2*j);
+        double divider = (2.0*t-2.0*j)+1;
+        double divisor = (2.0*i-2.0*j);
         st(i-1, 0) *= (divider/ divisor);
         // std::cout << st(i, 0) << std::endl;
       }
     }
   }
 
-  // std::cout << t << " is t" << std::endl;
+  // std::cout <<  << " is t" << std::endl;
   // printarray(st);
 
   // condition for coarse grid and pressure calculation
@@ -66,36 +69,59 @@ int main() {
   std::vector<std::size_t> gridLen2;
   std::vector<std::size_t> coarseGrid;
 
+
+  // (9) in the paper
   prepareCoarseSizes(gridLen1, gridLen2, coarseGrid, kM.shape[0], t);
+  myBreakpoint();
   matrix correctionCoefficients({mc*2, mc*2});
-  transferCoarseGrid(correctionCoefficients, mc, st, t, fineSizeA, fineSizeB);
-
+  calcCorrMatrix(correctionCoefficients, mc, st, t, fineSizeA, fineSizeB);
+  writeToFile(Ip, "pressureGrid");
   // double q = coarseGrid.size();
+  std::vector<matrix> coarseVector;
 
-  for (auto qM = coarseGrid.rbegin(); qM != coarseGrid.rend(); ++qM) {
-    // std::cout << *qM << std::endl;
+  for (int i = 0; i < coarseGrid.size(); i++) {
+    // (10) in the paper
     // start iterative calculation_loop
-    std::size_t gridLen = sqrt(*qM);
-    matrix coarseMatrix({gridLen, gridLen});
+    std::size_t gridLen = gridLen1[i];
     matrix coarsePressure({gridLen, gridLen});
+    coarseVector.push_back(coarsePressure);
     double cellSize = size/ gridLen;
+    myBreakpoint();
 
-    std::cout << "startin press calc\n";
-    calc_coarse_pressure(Ip, st, coarsePressure, t);
-    writeToFile(coarsePressure, "./tests/coarse_grid"+std::to_string(gridLen));
-    std::cout << "startin loop calcs\n";
-    calculation_loop(coarseMatrix, coarsePressure, cellSize, v, E);
-    writeToFile(coarseMatrix, "./tests/coarse_matrix"+std::to_string(gridLen));
-    std::cout << "startin defl correction\n";
-    deflectionCorrection(coarseMatrix, mc, correctionCoefficients, Ip, t);
-    writeToFile(coarseMatrix, "./tests/coarse_corr_matrix"+
-                std::to_string(gridLen));
-    coarseToFineGrid(coarseMatrix, kM, st, t);
+    if (i == 0){
+      calc_coarse_pressure(Ip, st, coarseVector[0], t);
+    } else {
+      calc_coarse_pressure(coarseVector[i-1], st, coarseVector[i], t);
+    }
+    writeToFile(coarseVector[i], "./tests/coarse_grid"+std::to_string(gridLen));
   }
 
+  // direct summation from Johnson, equal to (11) in paper
+  std::size_t gridLen = gridLen1[coarseVector.size()-1];
+  matrix coarsestMatrix({gridLen, gridLen});
+  double cellSize = size/ gridLen;
+  calculation_loop(coarsestMatrix, coarseVector[coarseVector.size()-1],
+                    cellSize, v, E);
+
+  for (int i = coarseVector.size()-1; i > 0; --i ) {
+    std::size_t gridLen = gridLen1[i-1];
+    matrix coarseMatrix({gridLen, gridLen});
+    double cellSize = size/ gridLen;
+
+    // writeToFile(coarseMatrix, "./tests/coarse_matrix"+std::to_string(gridLen));
+    // (13) and (14) in paper
+    deflectionCorrection(coarsestMatrix, mc, correctionCoefficients, Ip, t);
+    writeToFile(coarsestMatrix, "./tests/coarse_corr_matrix"+
+                std::to_string(gridLen));
+    // (15) in paper
+    coarseToFineGrid(coarsestMatrix, coarseMatrix, st, t);
+    coarsestMatrix = coarseMatrix;
+  }
+
+  // (16) and (17) in paper
   fineGridCorrection(kM, st, mc, t, Ip);
   writeToFile(kM, "grid_faster");
-  writeToFile(Ip, "grid_faster2");
+  writeToFile(Ip, "grid_faster_pressure");
 
   return 0;
 }

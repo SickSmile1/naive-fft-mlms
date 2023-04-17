@@ -44,6 +44,9 @@ void initializeDisplacementArray(matrix &Ic);
 void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size,
                  double v, double E);
 
+void calculation_loop2(matrix &Ic, const matrix &Pa, double cell_size,
+                 double v, double E);
+
 // inner loop calling the calulation for every n
 double calculate(double a, double b, double x, double y);
 
@@ -76,7 +79,7 @@ void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
 void deflectionCorrection(matrix &kM, const double mc,
                 const matrix &cC, const matrix &cP, const std::size_t t);
 
-void transferCoarseGrid(matrix &correctionCoefficients, const double mc,
+void calcCorrMatrix(matrix &correctionCoefficients, const double mc,
                 const matrix &st, const std::size_t t,
                 const double fineSizeA, const double fineSizeB);
 
@@ -87,4 +90,5 @@ void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
 void fineGridCorrection(matrix &kM, const matrix &st,
                const double mc, const std::size_t ts,
                const matrix fP);
+void myBreakpoint();
 #endif  // MLMS_H_

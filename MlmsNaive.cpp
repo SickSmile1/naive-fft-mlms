@@ -78,6 +78,21 @@ void calculation_loop(matrix &Ic, const matrix &Pa,
 }
 
 // __________________________________________________________________
+void calculation_loop2(matrix &Ic, const matrix &Pa,
+                double cell_size,
+                double v, double E) {
+  // outer loop over grid to call displacement calculation
+  // for parallelisation uncomment, compiler option needed: -fopen
+  #pragma omp parallel for simd
+  for (std::size_t i = 0; i < Ic.shape[0]-1; i++) {
+    for (std::size_t j = 0; j < Ic.shape[1]-1; j++) {
+      Ic(i, j) -= calc_displacement(Pa, Ic, i, j, cell_size/2,
+                          cell_size/2, v, E, cell_size);
+    }
+  }
+}
+
+// __________________________________________________________________
 double calc_displacement(const matrix &pressure,
               const matrix &Ic,
               double y, double x,
@@ -97,6 +112,10 @@ double calc_displacement(const matrix &pressure,
   return res;
 }
 
+void myBreakpoint() {
+
+}
+
 // __________________________________________________________________
 void initializeMultiplicationArray(matrix &Ic) {
   for (std::size_t i = 0; i < Ic.shape[0]; i++) {
@@ -110,40 +129,43 @@ void initializeMultiplicationArray(matrix &Ic) {
 void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP,
                           std::size_t ts) {
   int t = ts;
-  for (std::size_t m = 0+t; m < cP.shape[0]; m++) {
-    for (std::size_t n = 0+t; n < cP.shape[1]; n++) {
+  for (std::size_t m = 0; m < cP.shape[0]; m++) {
+    for (std::size_t n = 0; n < cP.shape[1]; n++) {
       int i = 2*(m-t+1);
       int j = 2*(n-t+1);
       // cP(m,n) = 0;
 
       double c_pressure;
-      if (i < fP.shape[0] && j < fP.shape[1]) {
+      if (i < fP.shape[0] && j < fP.shape[1] && 
+          i >= 0 && j >= 0) {
         c_pressure = fP(i, j);
       } else {
         c_pressure = 0;
+        continue;
       }
-      for (int k = 1; k < 2 * t; k++) {
+      for (int k = 1; k <= 2*t; k++) {
         int pi = i+2*(k-t)-1;
         if (pi > 0 && pi < fP.shape[0] && j < fP.shape[1]) {
-          c_pressure += st(k, 0)*fP(pi, j);
+          c_pressure += st(k - 1, 0)*fP(pi, j);
         }
       }
-      for (int l = 1; l < 2 * t; l++) {
+      for (int l = 1; l <= 2*t; l++) {
         int pj = j+2*(l-t)-1;
         if (pj > 0 && pj < fP.shape[1] && i < fP.shape[0]) {
-          c_pressure += st(l, 0)*fP(i, pj);
+          c_pressure += st(l - 1, 0)*fP(i, pj);
         }
       }
 
-      for (int k = 1; k < 2 * t; k++) {
-        for (int l = 1; l < 2 * t; l++) {
+      for (int k = 1; k <= 2*t; k++) {
+        for (int l = 1; l <= 2* t; l++) {
           int si = i+2*(k-t)-1;
           int sj = j+2*(l-t)-1;
           if (si > 0 && sj > 0 && si < fP.shape[0] && sj < fP.shape[1]) {
-            c_pressure += st(k, 0) * st(l, 0) * fP(si, sj);
+            c_pressure += st(k - 1, 0) * st(l - 1, 0) * fP(si, sj);
           }
         }
       }
+
       cP(m, n) += c_pressure;
     }
   }
@@ -181,12 +203,13 @@ void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
 }
 
 // __________________________________________________________________
-void transferCoarseGrid(matrix &kM, const double mc, const matrix &st,
+void calcCorrMatrix(matrix &correctionCoefficients, const double mc, 
+                        const matrix &st,
                         const std::size_t ts, const double fineSizeA,
                         const double fineSizeB) {
   int t = ts;
-  for (int i = -mc+1; i < mc; i++) {
-    for (int j = -mc+1; j < mc; j++) {
+  for (int i = -mc; i <= mc; i++) {
+    for (int j = -mc; j <= mc; j++) {
       bool iEven = (i % 2 == 0);
       bool jEven = (j % 2 == 0);
 
@@ -196,7 +219,7 @@ void transferCoarseGrid(matrix &kM, const double mc, const matrix &st,
       for (int k = 1; k <= 2*t; k++) {
         int pi = i - 2 * (k - t) + 1;
         K = calculate(fineSizeA, fineSizeB, pi, j);
-        res += st(k, 0) * K;
+        res += st(k-1, 0) * K;
       }
 
       // even i, odd j
@@ -204,7 +227,7 @@ void transferCoarseGrid(matrix &kM, const double mc, const matrix &st,
       for (int l = 1; l <= 2*t; l++) {
         int pj = j - 2 * (l - t) + 1;
         K = calculate(fineSizeA, fineSizeB, i, pj);
-        res1 += st(l, 0) * K;
+        res1 += st(l-1, 0) * K;
       }
 
       // odd i, j
@@ -214,15 +237,19 @@ void transferCoarseGrid(matrix &kM, const double mc, const matrix &st,
           int pj = j - 2 * (l - t) + 1;
           int pi = i - 2 * (k - t) + 1;
           K = calculate(fineSizeA, fineSizeB, pi, pj);
-          res1 += st(l, 0) * K;
+          res2 += st(l-1, 0) * st(k-1, 0) * K;
         }
       }
       double result = 0;
       K = calculate(fineSizeA, fineSizeB, i, j);
       result += (jEven*!iEven) * (K - res);
       result += (!jEven*iEven) * (K - res1);
-      result += (!jEven*iEven) * (K - res2);
-      kM(i, j) = result*(jEven*iEven);
+      result += (!jEven*!iEven) * (K - res2);
+      if (jEven*iEven && i > 0 && j > 0) {
+        correctionCoefficients(i, j) = 0;
+      } else if (i > 0 && j > 0) {
+        correctionCoefficients(i, j) = K - result*(jEven*iEven);
+      }
     }
   }
 }
@@ -230,16 +257,20 @@ void transferCoarseGrid(matrix &kM, const double mc, const matrix &st,
 void deflectionCorrection(matrix &kM, const double mc,
                           const matrix &cC, const matrix &cP,
                           const std::size_t ts) {
+  // (13) (14)
   int t = ts;
   for (int i = 0; i < kM.shape[0]; i++) {
     for (int j = 0; j < kM.shape[1]; j++) {
       // summation over -mc <= k/l <= mc
-      for (int k = -mc+1; i < mc; i++) {
-        for (int l = -mc+1; j < mc; j++) {
+      for (int k = -mc; k <= mc; k++) {
+        for (int l = -mc; l <= mc; l++) {
           int pi = 2 * (i - t + 1) - k;
           int pj = 2 * (j - t + 1) - l;
-          std::cout << "startin correction\n";
-          kM(i, j) += cC(k+mc-1, l+mc-1) * cP(pi, pj);
+          // std::cout << "startin correction\n";
+          if (pi > 0 && pj > 0 && pi < cP.shape[0] && pj < cP.shape[1]&&
+              (k+mc)>=0 && (k+mc)<cC.shape[0] && (l+mc)>=0 && (l+mc)<cC.shape[1]) {
+            kM(i, j) += cC(k+mc, l+mc) * cP(pi, pj);
+          }
         }
       }
     }
@@ -249,6 +280,7 @@ void deflectionCorrection(matrix &kM, const double mc,
 
 void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
                       const std::size_t ts) {
+  // (15) and (16) in paper
   int t = ts;
   for (std::size_t i = 0; i < kM.shape[0]; i++) {
     for (std::size_t j = 0; j < kM.shape[1]; j++) {
@@ -258,22 +290,22 @@ void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
       int n = (j + 1)/2 + t - 1;
 
       int res0 = 0;
-      for (int k = 1; k < 2*t; k++) {
+      for (int k = 1; k <= 2*t; k++) {
         int pi = m + k - t - 1;
         if (pi >= 0 && pi< cM.shape[0] && n < cM.shape[1]) {
           res0 += st(k-1, 0) * cM(pi, n);
         }
       }
       int res1 = 0;
-      for (int l = 1; l < 2*t; l++) {
+      for (int l = 1; l <= 2*t; l++) {
         int pj = n + l - t - 1;
         if (pj >= 0 && pj < cM.shape[1] && m < cM.shape[0]) {
           res1 += st(l-1, 0) * cM(m, pj);
         }
       }
       int res2 = 0;
-      for (int k = 1; k < 2*t; k++) {
-        for (int l = 1; l < 2*t; l++) {
+      for (int k = 1; k <= 2*t; k++) {
+        for (int l = 1; l <= 2*t; l++) {
           int pi = m + k - t - 1;
           int pj = n + l - t - 1;
           if (pi >= 0 && pj >= 0 && pi < cM.shape[0] && pj < cM.shape[1]) {
@@ -286,7 +318,9 @@ void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
       result += (iEven*!jEven)*res1;
       result += (!iEven*jEven)*res2;
       result += (iEven*jEven)*kM(i, j);
-      kM(i, j) = result;
+      if (i > 0 && j > 0 && i < kM.shape[0] && j < kM.shape[1]) {
+        kM(i, j) = result;
+      }
     }
   }
 }
@@ -294,6 +328,7 @@ void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
 void fineGridCorrection(matrix &kM, const matrix &st,
                   const double mc, const std::size_t ts,
                   const matrix fP) {
+  // (16) and (17) in paper
   int t = ts;
   matrix cC1({2*mc, 2*mc});
   initializeDisplacementArray(cC1);
@@ -309,14 +344,14 @@ void fineGridCorrection(matrix &kM, const matrix &st,
       int res0 = 0;
       for (int k = 1; k < 2*t; k++) {
         int pi = i + 2 * (k - t) - 1;
-        if (pi >= 0 && pi < kM.shape[0] && i < kM.shape[1]) {
+        if (pi >= 0 && pi < kM.shape[0] && j < kM.shape[1] && j>=0) {
           res0 += st(k-1, 0) * kM(pi, j);
         }
       }
       int res1 = 0;
       for (int l = 1; l < 2*t; l++) {
         int pj = j + 2 * (l - t) - 1;
-        if (pj >= 0 && pj < kM.shape[1] && j < kM.shape[0]) {
+        if (pj >= 0 && pj < kM.shape[1] && i < kM.shape[0] && i >=0) {
           res1 += st(l-1, 0) * kM(i, pj);
         }
       }
@@ -330,9 +365,9 @@ void fineGridCorrection(matrix &kM, const matrix &st,
           }
         }
       }
-      cC2(i, j) = kM(i, j) - ((!iEven*jEven) * res0);
-      cC3(i, j) = kM(i, j) - ((iEven*!jEven) * res1);
-      cC4(i, j) = kM(i, j) - ((!iEven*jEven) * res2);
+      cC2(i+mc, j+mc) = kM(i+mc, j+mc) - ((!iEven*jEven) * res0);
+      cC3(i+mc, j+mc) = kM(i+mc, j+mc) - ((iEven*!jEven) * res1);
+      cC4(i+mc, j+mc) = kM(i+mc, j+mc) - ((!iEven*jEven) * res2);
     }
   }
 
@@ -351,7 +386,7 @@ void fineGridCorrection(matrix &kM, const matrix &st,
           int pi = i - k;
           int pj = j - l;
           if (pi > 0 && pj > 0 && pi < fP.shape[0] && pj < fP.shape[1]) {
-            res += c(k, l)* fP(pi, pj);
+            res += c(k+mc, l+mc)* fP(pi, pj);
           }
         }
       }
