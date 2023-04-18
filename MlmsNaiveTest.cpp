@@ -92,3 +92,15 @@ TEST(MlmsWriteToFile, writeToFile) {
   buff >> res;
   ASSERT_EQ(test(2, 2), res);
 }
+
+TEST(Mlms, boundaryCheck) {
+  matrix m({2, 2});
+  EXPECT_TRUE(boundaryCheck(m, 1, 1));
+  EXPECT_TRUE(boundaryCheck(m, 1, 0));
+  EXPECT_TRUE(boundaryCheck(m, 0, 1));
+  EXPECT_TRUE(boundaryCheck(m, 0, 0));
+  EXPECT_FALSE(boundaryCheck(m, -1, 0));
+  EXPECT_FALSE(boundaryCheck(m, 1, -1));
+  EXPECT_FALSE(boundaryCheck(m, 3, 0));
+  EXPECT_FALSE(boundaryCheck(m, 0, 3));
+}

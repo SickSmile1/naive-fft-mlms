@@ -19,7 +19,7 @@ void printarray(const matrix &array) {
 }
 
 // __________________________________________________________________
-void initializePressureArray(matrix &Pa, double lower_b,
+void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
                              double upper_b, double pressure) {
   initializeDisplacementArray(Pa);
   for (std::size_t i = lower_b; i < upper_b; i++) {
@@ -30,7 +30,7 @@ void initializePressureArray(matrix &Pa, double lower_b,
 }
 
 // __________________________________________________________________
-void initializeDisplacementArray(matrix &Ic) {
+void initializeDisplacementArray(matrix &Ic) { // NOLINT
   for (std::size_t i = 0; i < Ic.shape[0]; i++) {
     for (std::size_t j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = 0;
@@ -63,7 +63,7 @@ inline double calculate(double a, double b, double x, double y) {
 
 
 // __________________________________________________________________
-void calculation_loop(matrix &Ic, const matrix &Pa,
+void calculation_loop(matrix &Ic, const matrix &Pa, // NOLINT
                 double cell_size,
                 double v, double E) {
   // outer loop over grid to call displacement calculation
@@ -72,21 +72,6 @@ void calculation_loop(matrix &Ic, const matrix &Pa,
   for (std::size_t i = 0; i < Ic.shape[0]; i++) {
     for (std::size_t j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = calc_displacement(Pa, Ic, i, j, cell_size/2,
-                          cell_size/2, v, E, cell_size);
-    }
-  }
-}
-
-// __________________________________________________________________
-void calculation_loop2(matrix &Ic, const matrix &Pa,
-                double cell_size,
-                double v, double E) {
-  // outer loop over grid to call displacement calculation
-  // for parallelisation uncomment, compiler option needed: -fopen
-  #pragma omp parallel for simd
-  for (std::size_t i = 0; i < Ic.shape[0]-1; i++) {
-    for (std::size_t j = 0; j < Ic.shape[1]-1; j++) {
-      Ic(i, j) -= calc_displacement(Pa, Ic, i, j, cell_size/2,
                           cell_size/2, v, E, cell_size);
     }
   }
@@ -112,12 +97,10 @@ double calc_displacement(const matrix &pressure,
   return res;
 }
 
-void myBreakpoint() {
 
-}
 
 // __________________________________________________________________
-void initializeMultiplicationArray(matrix &Ic) {
+void initializeMultiplicationArray(matrix &Ic) { // NOLINT
   for (std::size_t i = 0; i < Ic.shape[0]; i++) {
     for (std::size_t j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = 1;
@@ -125,6 +108,14 @@ void initializeMultiplicationArray(matrix &Ic) {
   }
 }
 
+// __________________________________________________________________
+bool boundaryCheck(matrix &m, int i, int j) {
+  bool res = (i < m.shape[0]) * (j < m.shape[1]) * (i >= 0) * (j >= 0);
+  return res;
+}
+
+
+/*
 // __________________________________________________________________
 void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP,
                           std::size_t ts) {
@@ -394,3 +385,4 @@ void fineGridCorrection(matrix &kM, const matrix &st,
     }
   }
 }
+*/

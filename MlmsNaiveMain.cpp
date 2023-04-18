@@ -23,8 +23,8 @@ int main() {
   matrix kM({grid1, grid2});
   matrix Ip({grid1, grid2});
 
-  double lower_b = (grid1)/2 - (size_p/fineSizeA)/2;
-  double upper_b = (grid2)/2 + (size_p/fineSizeB)/2;
+  double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
+  double upper_b = (grid2)/2. + (size_p/fineSizeB)/2.;
 
   initializePressureArray(Ip, lower_b, upper_b, pressure);
 
@@ -37,11 +37,11 @@ int main() {
   double g_old = 0;
   double min_g = std::min(grid1, grid2);
   std::size_t t = beta*log(min_g);
-  double mc = 0.7* pow(min_g, 1/t)-1;
+  double mc = 0.7* pow(min_g, 1./t)-1;
   if (mc < 2*t) {
     mc = 2*t;
   }
-  double eps = pow(min_g, (-3/2));
+  double eps = pow(min_g, (-3./2.));
 
   double warnings = eps + size + size_p + pressure + delta + g_old + mc;
   warnings += warnings;
@@ -61,6 +61,109 @@ int main() {
     }
   }
 
+  std::size_t gridNum = grid1 / 2 + 2 * t - 1;
+  matrix &pF = Ip;
+  std::vector<std::size_t> gridSize;
+  gridSize.push_back(grid1);
+  gridSize.push_back(gridNum);
+  // printarray(pF);
+  std::cout << gridNum << std::endl;
+  while (gridNum*gridNum >= grid1) {
+    matrix pC({gridNum, gridNum});
+    for (int m = 0; m < pC.shape[0]; m++) {
+      for (int n = 0; n < pC.shape[1]; n++) {
+        // 1 <= k/l <= 2*t
+        int i = 2*(m-t+1);
+        int j = 2*(n-t+1);
+        double res = 0;
+        bool notInFineGrid = boundaryCheck(pF, i, j);
+        if (!notInFineGrid) {
+          continue;
+        } else {
+          res += pF(i, j);
+          for (int k = 1; k <= 2*t; k++) {
+            int pi = i+2*(k-t)-1;
+            res += boundaryCheck(pF, pi, j) ? st(k-1, 0)*pF(pi, j): 0;
+          }
+          for (int l = 1; l <= 2*t; l++) {
+            int pj = j+2*(l-t)-1;
+            res += boundaryCheck(pF, i, pj) ? st(l-1, 0)*pF(i, pj): 0;
+          }
+
+          for (int k = 1; k <= 2*t; k++) {
+            for (int l = 1; l < 2*t; l++) {
+              int pi = i+2*(k-t)-1;
+              int pj = j+2*(l-t)-1;
+              res += boundaryCheck(pF, pi, pj) ? st(k-1, 0)*st(l-1, 0)*pF(pi, pj): 0;
+            }
+          }
+          pC(m, n) = res;
+        }
+      }
+    }
+    writeToFile(pC, "./tests/coarsened_"+std::to_string(gridNum));
+    gridNum = gridNum / 2 + 2 * t - 1;
+    gridSize.push_back(gridNum);
+    pF = pC;
+  }
+
+  double cell = size / pF.shape[0];
+  double halfSize = cell/2;
+  matrix coarseDisplacement({pF.shape[0], pF.shape[1]});
+  for (int i = 0; i < pF.shape[0]; i++) {
+    for (int j = 0; j < pF.shape[1]; j++) {
+      for (int k = 0; k < pF.shape[0]; k++) {
+        for (int l = 0; l < pF.shape[1]; l++) {
+          double xj = (i*cell)-(k*cell);
+          double yi = (j*cell)-(l*cell);
+          coarseDisplacement(i, j) += calculate(halfSize, halfSize, xj, yi) *
+                            ((1-v)/(PI*E)) * pF(i, j);
+        }
+      }
+    }
+  }
+  printarray(coarseDisplacement);
+  double d = gridSize.size()-1.;
+  std::cout << halfSize << std::endl;
+  std::size_t temp_mc = mc;
+  matrix cC({temp_mc*2+1, temp_mc*2+1});
+  for (int i = -mc; i <= mc; i++) {
+    for (int j = -mc; j <= mc; j++) {
+      bool iEven = (i%2==0);
+      bool jEven = (j%2==0);
+      double powi = (i*pow(2,d));
+      double powj = (j*pow(2,d));
+      double res1, res2, res3 = 0;
+      double K = calculate(halfSize, halfSize, powj-(i*cell), powi-(i*cell))*
+                  ((1-v)/(PI*E)) * pressure;
+
+      for (int k = 1; k <= 2*t; k++) {
+        res1 += st(k-1, 0) * calculate(halfSize, halfSize, powi-2*(k-t)+1,
+                              powj)* ((1-v)/(PI*E)) * pressure;
+      }
+      for (int l = 1; l <= 2*t; l++) {
+        res2 += st(l-1, 0) * calculate(halfSize, halfSize, powi,
+                              powj-2*(l-t)+1) * ((1-v)/(PI*E)) * pressure;
+      }
+      for (int k = 1; k <= 2*t; k++) {
+        for (int l = 1; l <= 2*t; l++) {
+          res3 += st(k-1,0)*st(l-1, 0) * calculate(halfSize, halfSize, powi-2*(k-t)+1,
+                              powj-2*(l-t)+1) * ((1-v)/(PI*E)) * pressure;
+        }
+      }
+      cC(i+mc, j+mc) = (!iEven*jEven)*(K-res1);
+      cC(i+mc, j+mc) = (iEven*!jEven)*(K-res2);
+      cC(i+mc, j+mc) = (!iEven*!jEven)*(K-res3);
+      cC(i+mc, j+mc) = (iEven*jEven)*0;
+    }
+    std::cout << (i*pow(2,d))-2*(-8-t)+1 << " thats my pow\n";
+  }
+  writeToFile(cC, "./tests/cC");
+  // printarray(cC);
+
+
+
+  /*
   // std::cout <<  << " is t" << std::endl;
   // printarray(st);
 
@@ -122,7 +225,7 @@ int main() {
   fineGridCorrection(kM, st, mc, t, Ip);
   writeToFile(kM, "grid_faster");
   writeToFile(Ip, "grid_faster_pressure");
-
+*/
   return 0;
 }
 

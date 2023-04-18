@@ -32,19 +32,19 @@ struct matrix{
 };
 
 // initialization of pressure array
-void initializePressureArray(matrix &Pa, double lower_b,
-                             double upper_b, double pressure);
+void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
+                             double upper_b, double pressure); // NOLINT
 
 // initialization with 0 for all elements
-void initializeDisplacementArray(matrix &Ic);
+void initializeDisplacementArray(matrix &Ic); // NOLINT
 
 
 
 // most outer loop, for we need a n*n loop for the algorithm
-void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size,
+void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
                  double v, double E);
 
-void calculation_loop2(matrix &Ic, const matrix &Pa, double cell_size,
+void calculation_loop2(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
                  double v, double E);
 
 // inner loop calling the calulation for every n
@@ -63,19 +63,23 @@ void printarray(const matrix &array);
 
 // coarse pressure array calculation
 void calc_coarse_pressure(const matrix &fP, const matrix &st,
-                          matrix &cP, std::size_t t);
+                          matrix &cP, std::size_t t); // NOLINT
 
 // initialization with 1 for all elements
-void initializeMultiplicationArray(matrix &Ic);
+void initializeMultiplicationArray(matrix &Ic); // NOLINT
 
 // calculate the sizes for the coarse grids
-void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
-                std::vector<std::size_t> &gridLen2,
-                std::vector<std::size_t> &coarseGrid,
+void prepareCoarseSizes(std::vector<std::size_t> &gridLen1, // NOLINT
+                std::vector<std::size_t> &gridLen2, // NOLINT
+                std::vector<std::size_t> &coarseGrid, // NOLINT
                 const std::size_t shape,
                 const std::size_t t);
 
 
+bool boundaryCheck(matrix &m, int i, int j); // NOLINT
+
+
+/*
 void deflectionCorrection(matrix &kM, const double mc,
                 const matrix &cC, const matrix &cP, const std::size_t t);
 
@@ -90,5 +94,5 @@ void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
 void fineGridCorrection(matrix &kM, const matrix &st,
                const double mc, const std::size_t ts,
                const matrix fP);
-void myBreakpoint();
+void myBreakpoint();*/
 #endif  // MLMS_H_
