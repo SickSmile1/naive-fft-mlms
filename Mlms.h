@@ -78,9 +78,17 @@ void prepareCoarseSizes(std::vector<std::size_t> &gridLen1, // NOLINT
 
 bool boundaryCheck(matrix &m, int i, int j); // NOLINT
 
+void correctionSteps(matrix& cC, const matrix& st, std::size_t mc, int t, int fineSizeA, // Nolint
+    int fineSizeB, int halfSize);
 
-/*
-void deflectionCorrection(matrix &kM, const double mc,
+
+void applyCorrection(matrix &coarseDisplacement, const matrix cC, const matrix Ip, int t);
+
+double correctionHelper(const matrix& cC, const matrix& Ip, int t,
+    int i, int j);
+
+void interpolateGrid(matrix &nextDisplacement, const matrix coarseDisplacement, const matrix st);
+/*void deflectionCorrection(matrix &kM, const double mc,
                 const matrix &cC, const matrix &cP, const std::size_t t);
 
 void calcCorrMatrix(matrix &correctionCoefficients, const double mc,
@@ -93,6 +101,6 @@ void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
 
 void fineGridCorrection(matrix &kM, const matrix &st,
                const double mc, const std::size_t ts,
-               const matrix fP);
-void myBreakpoint();*/
+               const matrix fP);*/
+void myBreakpoint();
 #endif  // MLMS_H_

@@ -9,13 +9,13 @@ int main() {
   const double PI = 3.141592653589793238463;
 
   // initial size and pressure values
-  const double size = 500;
-  const std::size_t size_p = 250;
+  const double size = 2;
+  const std::size_t size_p = 1;
   double pressure = 1.;
 
   // initial grid size for initialization
-  std::size_t grid1 = 260;
-  std::size_t grid2 = 260;
+  int grid1 = 260;
+  int grid2 = 260;
 
   double fineSizeA = size / grid1;
   double fineSizeB = size / grid2;
@@ -36,7 +36,7 @@ int main() {
   double delta = 0;
   double g_old = 0;
   double min_g = std::min(grid1, grid2);
-  std::size_t t = beta*log(min_g);
+  int t = beta*log(min_g);
   double mc = 0.7* pow(min_g, 1./t)-1;
   if (mc < 2*t) {
     mc = 2*t;
@@ -49,8 +49,8 @@ int main() {
   matrix st({2*t, 1});
   initializeMultiplicationArray(st);
   // calculate transfer stylus (8)
-  for (std::size_t i = 1; i <= 2*t; i++) {
-    for (std::size_t j = 1; j <= 2*t; j++) {
+  for (int i = 1; i <= 2*t; i++) {
+    for (int j = 1; j <= 2*t; j++) {
       if (j != i) {
         // std::cout << st(i, 0) << " : ";
         double divider = (2.0*t-2.0*j)+1;
@@ -61,13 +61,12 @@ int main() {
     }
   }
 
-  std::size_t gridNum = grid1 / 2 + 2 * t - 1;
+  int gridNum = grid1 / 2 + 2 * t - 1;
   matrix &pF = Ip;
-  std::vector<std::size_t> gridSize;
-  gridSize.push_back(grid1);
+  std::vector<int> gridSize;
+  // gridSize.push_back(grid1);
   gridSize.push_back(gridNum);
-  // printarray(pF);
-  std::cout << gridNum << std::endl;
+
   while (gridNum*gridNum >= grid1) {
     matrix pC({gridNum, gridNum});
     for (int m = 0; m < pC.shape[0]; m++) {
@@ -94,7 +93,8 @@ int main() {
             for (int l = 1; l < 2*t; l++) {
               int pi = i+2*(k-t)-1;
               int pj = j+2*(l-t)-1;
-              res += boundaryCheck(pF, pi, pj) ? st(k-1, 0)*st(l-1, 0)*pF(pi, pj): 0;
+              res += boundaryCheck(pF, pi, pj) ?
+                      st(k-1, 0)*st(l-1, 0)*pF(pi, pj) : 0;
             }
           }
           pC(m, n) = res;
@@ -103,65 +103,50 @@ int main() {
     }
     writeToFile(pC, "./tests/coarsened_"+std::to_string(gridNum));
     gridNum = gridNum / 2 + 2 * t - 1;
-    gridSize.push_back(gridNum);
+    if (gridNum*gridNum >= grid1) {
+      gridSize.push_back(gridNum);
+    }
     pF = pC;
   }
 
-  double cell = size / pF.shape[0];
-  double halfSize = cell/2;
+  // for (auto& e: gridSize) std::cout << e << std::endl;
+  // std::cout << fineSizeA << " finesizeA\n"; 
+  double d = gridSize.size()-1.;
+  double halfSize = fineSizeA*pow(2, d-1);
+  std::cout << "halfSize: "<<halfSize << std::endl;
+  std::cout << "d:" << d << " gridSize[5]" << gridSize[5]<< std::endl;
+
+
   matrix coarseDisplacement({pF.shape[0], pF.shape[1]});
   for (int i = 0; i < pF.shape[0]; i++) {
     for (int j = 0; j < pF.shape[1]; j++) {
       for (int k = 0; k < pF.shape[0]; k++) {
         for (int l = 0; l < pF.shape[1]; l++) {
-          double xj = (i*cell)-(k*cell);
-          double yi = (j*cell)-(l*cell);
-          coarseDisplacement(i, j) += calculate(halfSize, halfSize, xj, yi) *
+          double xj = (i*halfSize*2)-(k*halfSize*2);
+          double yi = (j*halfSize*2)-(l*halfSize*2);
+          coarseDisplacement(i, j) += calculate(fineSizeA, fineSizeB, xj, yi) *
                             ((1-v)/(PI*E)) * pF(i, j);
         }
       }
     }
   }
-  printarray(coarseDisplacement);
-  double d = gridSize.size()-1.;
-  std::cout << halfSize << std::endl;
-  std::size_t temp_mc = mc;
-  matrix cC({temp_mc*2+1, temp_mc*2+1});
-  for (int i = -mc; i <= mc; i++) {
-    for (int j = -mc; j <= mc; j++) {
-      bool iEven = (i%2==0);
-      bool jEven = (j%2==0);
-      double powi = (i*pow(2,d));
-      double powj = (j*pow(2,d));
-      double res1, res2, res3 = 0;
-      double K = calculate(halfSize, halfSize, powj-(i*cell), powi-(i*cell))*
-                  ((1-v)/(PI*E)) * pressure;
+    writeToFile(coarseDisplacement, "./tests/ds");
+  // printarray(coarseDisplacement);
+  for (int i = 0; i < gridSize.size(); i++) {
+    std::cout << d-i << " <- thats the d\n";
+    double hS = fineSizeA*pow(2, d-i);
+    std::size_t temp_mc = (mc*2)+1;
+    matrix cC({temp_mc, temp_mc});
+    correctionSteps(cC, st, mc, t, fineSizeA, fineSizeB, hS);
+    applyCorrection(coarseDisplacement, cC, Ip, t);
 
-      for (int k = 1; k <= 2*t; k++) {
-        res1 += st(k-1, 0) * calculate(halfSize, halfSize, powi-2*(k-t)+1,
-                              powj)* ((1-v)/(PI*E)) * pressure;
-      }
-      for (int l = 1; l <= 2*t; l++) {
-        res2 += st(l-1, 0) * calculate(halfSize, halfSize, powi,
-                              powj-2*(l-t)+1) * ((1-v)/(PI*E)) * pressure;
-      }
-      for (int k = 1; k <= 2*t; k++) {
-        for (int l = 1; l <= 2*t; l++) {
-          res3 += st(k-1,0)*st(l-1, 0) * calculate(halfSize, halfSize, powi-2*(k-t)+1,
-                              powj-2*(l-t)+1) * ((1-v)/(PI*E)) * pressure;
-        }
-      }
-      cC(i+mc, j+mc) = (!iEven*jEven)*(K-res1);
-      cC(i+mc, j+mc) = (iEven*!jEven)*(K-res2);
-      cC(i+mc, j+mc) = (!iEven*!jEven)*(K-res3);
-      cC(i+mc, j+mc) = (iEven*jEven)*0;
-    }
-    std::cout << (i*pow(2,d))-2*(-8-t)+1 << " thats my pow\n";
+    matrix nextDisplacement({gridSize[d-i] , gridSize[d-i]});
+    interpolateGrid(nextDisplacement, coarseDisplacement, st);
+    writeToFile(nextDisplacement, "./tests/cC_"+std::to_string(gridSize[d-i]));
   }
-  writeToFile(cC, "./tests/cC");
-  // printarray(cC);
 
-
+  return 0;
+}
 
   /*
   // std::cout <<  << " is t" << std::endl;
@@ -226,6 +211,4 @@ int main() {
   writeToFile(kM, "grid_faster");
   writeToFile(Ip, "grid_faster_pressure");
 */
-  return 0;
-}
 

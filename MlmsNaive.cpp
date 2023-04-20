@@ -109,12 +109,116 @@ void initializeMultiplicationArray(matrix &Ic) { // NOLINT
 }
 
 // __________________________________________________________________
-bool boundaryCheck(matrix &m, int i, int j) {
+bool boundaryCheck(const matrix &m, int i, int j) { // NOLINT
   bool res = (i < m.shape[0]) * (j < m.shape[1]) * (i >= 0) * (j >= 0);
   return res;
 }
 
+// __________________________________________________________________
+bool boundaryCheck(matrix &m, int i, int j) { // NOLINT
+  bool res = (i < m.shape[0]) * (j < m.shape[1]) * (i >= 0) * (j >= 0);
+  return res;
+}
 
+// __________________________________________________________________
+void myBreakpoint() {}
+
+// __________________________________________________________________
+void correctionSteps(matrix& cC, const matrix& st, std::size_t mc, int t,
+    int fineSizeA, int fineSizeB, int halfSize) {
+  for (int i = -mc; i <= mc; i++) {
+    for (int j = -mc; j <= mc; j++) {
+      bool iEven = (i%2 == 0);
+      bool jEven = (j%2 == 0);
+      double res1, res2, res3 = 0;
+      int ts = t;
+      double K = calculate(fineSizeA/2, fineSizeB/2, i*halfSize,
+                  j*halfSize);
+
+      for (int k = 1; k <= 2*t; k++) {
+        res1 += st(k-1, 0) * calculate(fineSizeA/2, fineSizeB/2, 
+                              (i-2.*(k-ts)+1.)*halfSize,
+                              j*halfSize);
+      }
+      for (int l = 1; l <= 2*t; l++) {
+        res2 += st(l-1, 0) * calculate(fineSizeA/2, fineSizeB/2, i*halfSize,
+                              halfSize*(j-2.*(l-ts)+1.));
+      }
+      for (int k = 1; k <= 2*t; k++) {
+        for (int l = 1; l <= 2*t; l++) {
+          res3 += st(k-1, 0)*st(l-1, 0) * calculate(fineSizeA/2, fineSizeB/2,
+                              (i-2.*(k-ts)+1.)*halfSize, halfSize*(j-2.*(l-ts)+1.));
+        }
+      }
+      cC(i+mc, j+mc) += ((!iEven)&&jEven)*(K-res1);
+      cC(i+mc, j+mc) += (iEven&&(!jEven))*(K-res2);
+      cC(i+mc, j+mc) += ((!iEven)&&(!jEven))*(K-res3);
+      cC(i+mc, j+mc) += (iEven&&jEven)*0;
+    }
+  }
+  // writeToFile(cC, "./tests/cC");
+  // printarray(cC);
+}
+
+// __________________________________________________________________
+void applyCorrection(matrix &cD, const matrix cC, const matrix Ip,
+    int t) {
+  for (int i = 0; i < cD.shape[0]; i++) {
+    for (int j = 0; j < cD.shape[1]; j++) {
+      cD(i, j) += correctionHelper(cC, Ip, t, i, j);
+    }
+  }
+}
+
+// __________________________________________________________________
+double correctionHelper(const matrix& cC, const matrix& Ip, int t,
+    int i, int j) {
+  int mc = cC.shape[0]/2;
+  double res = 0;
+  for (int k = -mc; k < mc; k++) {
+    for (int l = -mc; l < mc; l++) {
+      int pi = 2*(i-t+1);
+      int pj = 2*(j-t+1);
+      if (boundaryCheck(Ip, pi, pj)) {
+        res += cC(k+mc, l+mc) * Ip(pi, pj);
+      }
+    }
+  }
+  return res;
+}
+
+// __________________________________________________________________
+void interpolateGrid(matrix &fD, const matrix cD, const matrix st) {
+  int t = st.shape[0]/2;
+  for (int i = 0; i < fD.shape[0]; i++) {
+    for (int j = 0; j < fD.shape[1]; j++) {
+      bool iEven = (i%2)==0;
+      bool jEven = (j%2)==0;
+      double res, res1, res2 = 0;
+      bool once = true;
+      for (int k = 1; k <= 2*t; k++) {
+        for (int l = 1; l <= 2*t; l++) {
+          int m = (i + 1) / 2 + t - 1;
+          int n = (j + 1) / 2 + t - 1;
+          int pm = m+k-t-1;
+          int pn = n+l-t-1;
+          if (boundaryCheck(cD,pm,n)) {
+            fD(i, j) += (iEven&jEven)*(st(k-1, 0) * cD(pm, n));
+          }
+          if (boundaryCheck(cD,m,pn)) fD(i, j) += (iEven&jEven)*(st(l-1, 0) * cD(m, pn)) * once;
+          else if (boundaryCheck(cD,pm,pn)) fD(i, j) += (iEven&jEven)*(st(k-1,0) * st(l-1,0) *cD(pm, pn));
+        }
+        once = false;
+      }
+      // fD(i, j) += (iEven&jEven)*res;
+      // fD(i, j) += (iEven&jEven)*res1;
+      // fD(i, j) += (iEven&jEven)*res2;
+      if (boundaryCheck(cD, (i+1)/2+t-1, (j+1)/2+t-1)) {
+        fD(i, j) += (iEven&jEven)*cD((i+1)/2+t-1, (j+1)/2+t-1);
+      }
+    }
+  }
+}
 /*
 // __________________________________________________________________
 void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP,
@@ -161,7 +265,7 @@ void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP,
     }
   }
 }
-
+/*
 // __________________________________________________________________
 void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
                         std::vector<std::size_t> &gridLen2,
