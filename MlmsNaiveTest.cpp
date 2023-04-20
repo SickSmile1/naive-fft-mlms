@@ -18,9 +18,9 @@ TEST(MLMS, calculate) {
   // test for symmetry of resulting matrix
   double size = 200;  // default: 200
 
-  std::size_t size_p = 100;  // default: 100
+  int size_p = 100;  // default: 100
 
-  std::size_t grid = 20;  // default: 50
+  int grid = 20;  // default: 50
 
   double cell_size = size/grid;
 
@@ -40,8 +40,8 @@ TEST(MLMS, calculate) {
 
   bool equal = false;
   double eps = 0.001;
-  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
-    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
+  for (int i = 0; i < Ic.shape[0]; i++) {
+    for (int j = 0; j < Ic.shape[1]; j++) {
       // std::cout << Ic(i, j) << " : " << Ic(j, i) << std::endl;
       equal = std::abs(Ic(i, j) - Ic(j, i)) < eps;
       if (equal == false) break;
@@ -62,8 +62,8 @@ TEST(MlmsWriteToFile, writeToFile) {
   // write/read file and check if values match
   matrix test({3, 3});
   int counter = 0;
-  for (std::size_t i = 0; i < test.shape[0]; i++) {
-    for (std::size_t j = 0; j < test.shape[1]; j++) {
+  for (int i = 0; i < test.shape[0]; i++) {
+    for (int j = 0; j < test.shape[1]; j++) {
       test(i, j) = counter++;
     }
   }

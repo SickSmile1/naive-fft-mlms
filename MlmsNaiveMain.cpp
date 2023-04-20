@@ -9,13 +9,13 @@ int main() {
   const double PI = 3.141592653589793238463;
 
   // initial size and pressure values
-  const double size = 2;
-  const std::size_t size_p = 1;
+  const double size = 20;
+  const std::size_t size_p = 10;
   double pressure = 1.;
 
   // initial grid size for initialization
-  int grid1 = 260;
-  int grid2 = 260;
+  int grid1 = 250;
+  int grid2 = 250;
 
   double fineSizeA = size / grid1;
   double fineSizeB = size / grid2;
@@ -80,24 +80,20 @@ int main() {
           continue;
         } else {
           res += pF(i, j);
+          bool once = true;
           for (int k = 1; k <= 2*t; k++) {
-            int pi = i+2*(k-t)-1;
-            res += boundaryCheck(pF, pi, j) ? st(k-1, 0)*pF(pi, j): 0;
-          }
-          for (int l = 1; l <= 2*t; l++) {
-            int pj = j+2*(l-t)-1;
-            res += boundaryCheck(pF, i, pj) ? st(l-1, 0)*pF(i, pj): 0;
-          }
-
-          for (int k = 1; k <= 2*t; k++) {
-            for (int l = 1; l < 2*t; l++) {
+            for (int l = 1; l <= 2*t; l++) {
               int pi = i+2*(k-t)-1;
               int pj = j+2*(l-t)-1;
+              res += boundaryCheck(pF, pi, j) ? st(k-1, 0)*pF(pi, j): 0;
+              res += (boundaryCheck(pF, i, pj)&once) ?
+                      st(l-1, 0)*pF(i, pj): 0;
               res += boundaryCheck(pF, pi, pj) ?
                       st(k-1, 0)*st(l-1, 0)*pF(pi, pj) : 0;
+              pC(m, n) += res;
             }
+            once = false;
           }
-          pC(m, n) = res;
         }
       }
     }
@@ -109,12 +105,11 @@ int main() {
     pF = pC;
   }
 
-  // for (auto& e: gridSize) std::cout << e << std::endl;
-  // std::cout << fineSizeA << " finesizeA\n"; 
-  double d = gridSize.size()-1.;
+  for (auto& e: gridSize) std::cout << e << std::endl;
+  double d = gridSize.size()-1;
   double halfSize = fineSizeA*pow(2, d-1);
-  std::cout << "halfSize: "<<halfSize << std::endl;
-  std::cout << "d:" << d << " gridSize[5]" << gridSize[5]<< std::endl;
+  std::cout << "halfSize: "<< halfSize << std::endl;
+  std::cout << "d:" << d << " gridSize[5]" << gridSize[5] << std::endl;
 
 
   matrix coarseDisplacement({pF.shape[0], pF.shape[1]});
@@ -132,16 +127,19 @@ int main() {
   }
     writeToFile(coarseDisplacement, "./tests/ds");
   // printarray(coarseDisplacement);
+  matrix &cD = coarseDisplacement;
   for (int i = 0; i < gridSize.size(); i++) {
     std::cout << d-i << " <- thats the d\n";
+    std::cout << coarseDisplacement.shape[0]-1 << "thats the size of coarse dp\n";
     double hS = fineSizeA*pow(2, d-i);
-    std::size_t temp_mc = (mc*2)+1;
+    int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     correctionSteps(cC, st, mc, t, fineSizeA, fineSizeB, hS);
-    applyCorrection(coarseDisplacement, cC, Ip, t);
+    applyCorrection(cD, cC, Ip, t);
 
     matrix nextDisplacement({gridSize[d-i] , gridSize[d-i]});
-    interpolateGrid(nextDisplacement, coarseDisplacement, st);
+    interpolateGrid(nextDisplacement, cD, st);
+    cD = nextDisplacement;
     writeToFile(nextDisplacement, "./tests/cC_"+std::to_string(gridSize[d-i]));
   }
 

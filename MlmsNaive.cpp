@@ -9,8 +9,8 @@ const double PI = 3.141592653589793238463;
 
 // __________________________________________________________________
 void printarray(const matrix &array) {
-  for (std::size_t i = 0; i < array.shape[0]; i++) {
-    for (std::size_t j = 0; j < array.shape[1]; j++) {
+  for (int i = 0; i < array.shape[0]; i++) {
+    for (int j = 0; j < array.shape[1]; j++) {
       printf("%.4f\t", array(i, j));
     }
     printf("\n");
@@ -22,8 +22,8 @@ void printarray(const matrix &array) {
 void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
                              double upper_b, double pressure) {
   initializeDisplacementArray(Pa);
-  for (std::size_t i = lower_b; i < upper_b; i++) {
-    for (std::size_t j = lower_b; j < upper_b; j++) {
+  for (int i = lower_b; i < upper_b; i++) {
+    for (int j = lower_b; j < upper_b; j++) {
       Pa(i, j) = pressure;
     }
   }
@@ -31,8 +31,8 @@ void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
 
 // __________________________________________________________________
 void initializeDisplacementArray(matrix &Ic) { // NOLINT
-  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
-    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
+  for (int i = 0; i < Ic.shape[0]; i++) {
+    for (int j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = 0;
     }
   }
@@ -69,8 +69,8 @@ void calculation_loop(matrix &Ic, const matrix &Pa, // NOLINT
   // outer loop over grid to call displacement calculation
   // for parallelisation uncomment, compiler option needed: -fopen
   #pragma omp parallel for simd
-  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
-    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
+  for (int i = 0; i < Ic.shape[0]; i++) {
+    for (int j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = calc_displacement(Pa, Ic, i, j, cell_size/2,
                           cell_size/2, v, E, cell_size);
     }
@@ -85,8 +85,8 @@ double calc_displacement(const matrix &pressure,
               double E, double cell) {
   double res = 0;
 
-  for (std::size_t i = 0; i < Ic.shape[0]; i+=1) {
-    for (std::size_t j = 0; j < Ic.shape[1]; j+=1) {
+  for (int i = 0; i < Ic.shape[0]; i+=1) {
+    for (int j = 0; j < Ic.shape[1]; j+=1) {
       double xj = (x*cell)-(j*cell);
       double yi = (y*cell)-(i*cell);
       // std::cout << "xi: " << xj << " yi: " << yi << std::endl;
@@ -101,8 +101,8 @@ double calc_displacement(const matrix &pressure,
 
 // __________________________________________________________________
 void initializeMultiplicationArray(matrix &Ic) { // NOLINT
-  for (std::size_t i = 0; i < Ic.shape[0]; i++) {
-    for (std::size_t j = 0; j < Ic.shape[1]; j++) {
+  for (int i = 0; i < Ic.shape[0]; i++) {
+    for (int j = 0; j < Ic.shape[1]; j++) {
       Ic(i, j) = 1;
     }
   }
@@ -110,13 +110,13 @@ void initializeMultiplicationArray(matrix &Ic) { // NOLINT
 
 // __________________________________________________________________
 bool boundaryCheck(const matrix &m, int i, int j) { // NOLINT
-  bool res = (i < m.shape[0]) * (j < m.shape[1]) * (i >= 0) * (j >= 0);
+  bool res = (i < m.shape[0]) & (j < m.shape[1]) & (i >= 0) & (j >= 0);
   return res;
 }
 
 // __________________________________________________________________
 bool boundaryCheck(matrix &m, int i, int j) { // NOLINT
-  bool res = (i < m.shape[0]) * (j < m.shape[1]) * (i >= 0) * (j >= 0);
+  bool res = (i < m.shape[0]) & (j < m.shape[1]) & (i >= 0) & (j >= 0);
   return res;
 }
 
@@ -124,7 +124,7 @@ bool boundaryCheck(matrix &m, int i, int j) { // NOLINT
 void myBreakpoint() {}
 
 // __________________________________________________________________
-void correctionSteps(matrix& cC, const matrix& st, std::size_t mc, int t,
+void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     int fineSizeA, int fineSizeB, int halfSize) {
   for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
@@ -136,18 +136,20 @@ void correctionSteps(matrix& cC, const matrix& st, std::size_t mc, int t,
                   j*halfSize);
 
       for (int k = 1; k <= 2*t; k++) {
-        res1 += st(k-1, 0) * calculate(fineSizeA/2, fineSizeB/2, 
+        res1 += st(k-1, 0) * calculate(fineSizeA/2, fineSizeB/2,
                               (i-2.*(k-ts)+1.)*halfSize,
                               j*halfSize);
       }
       for (int l = 1; l <= 2*t; l++) {
-        res2 += st(l-1, 0) * calculate(fineSizeA/2, fineSizeB/2, i*halfSize,
+        res2 += st(l-1, 0) * calculate(fineSizeA/2, fineSizeB/2,
+                              i*halfSize,
                               halfSize*(j-2.*(l-ts)+1.));
       }
       for (int k = 1; k <= 2*t; k++) {
         for (int l = 1; l <= 2*t; l++) {
-          res3 += st(k-1, 0)*st(l-1, 0) * calculate(fineSizeA/2, fineSizeB/2,
-                              (i-2.*(k-ts)+1.)*halfSize, halfSize*(j-2.*(l-ts)+1.));
+          res3 += st(k-1, 0)*st(l-1, 0) * calculate(fineSizeA/2,
+                              fineSizeB/2, (i-2.*(k-ts)+1.)*
+                              halfSize, halfSize*(j-2.*(l-ts)+1.));
         }
       }
       cC(i+mc, j+mc) += ((!iEven)&&jEven)*(K-res1);
@@ -161,7 +163,7 @@ void correctionSteps(matrix& cC, const matrix& st, std::size_t mc, int t,
 }
 
 // __________________________________________________________________
-void applyCorrection(matrix &cD, const matrix cC, const matrix Ip,
+void applyCorrection(matrix &cD, const matrix cC, const matrix Ip, // NOLINT
     int t) {
   for (int i = 0; i < cD.shape[0]; i++) {
     for (int j = 0; j < cD.shape[1]; j++) {
@@ -175,8 +177,8 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
     int i, int j) {
   int mc = cC.shape[0]/2;
   double res = 0;
-  for (int k = -mc; k < mc; k++) {
-    for (int l = -mc; l < mc; l++) {
+  for (int k = -mc; k <= mc; k++) {
+    for (int l = -mc; l <= mc; l++) {
       int pi = 2*(i-t+1);
       int pj = 2*(j-t+1);
       if (boundaryCheck(Ip, pi, pj)) {
@@ -188,13 +190,12 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
 }
 
 // __________________________________________________________________
-void interpolateGrid(matrix &fD, const matrix cD, const matrix st) {
+void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
   int t = st.shape[0]/2;
   for (int i = 0; i < fD.shape[0]; i++) {
     for (int j = 0; j < fD.shape[1]; j++) {
-      bool iEven = (i%2)==0;
-      bool jEven = (j%2)==0;
-      double res, res1, res2 = 0;
+      bool iEven = (i%2) == 0;
+      bool jEven = (j%2) == 0;
       bool once = true;
       for (int k = 1; k <= 2*t; k++) {
         for (int l = 1; l <= 2*t; l++) {
@@ -202,11 +203,14 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) {
           int n = (j + 1) / 2 + t - 1;
           int pm = m+k-t-1;
           int pn = n+l-t-1;
-          if (boundaryCheck(cD,pm,n)) {
-            fD(i, j) += (iEven&jEven)*(st(k-1, 0) * cD(pm, n));
+          if ((!iEven)&jEven) {
+            fD(i, j) += st(k-1, 0) * cD(pm, n);
           }
-          if (boundaryCheck(cD,m,pn)) fD(i, j) += (iEven&jEven)*(st(l-1, 0) * cD(m, pn)) * once;
-          else if (boundaryCheck(cD,pm,pn)) fD(i, j) += (iEven&jEven)*(st(k-1,0) * st(l-1,0) *cD(pm, pn));
+          if (iEven&(!jEven)) {
+            fD(i, j) += (st(l-1, 0) * cD(m, pn)) * once;
+          } else if ((!iEven)&(!jEven)) {
+            fD(i, j) += st(k-1, 0) * st(l-1, 0) * cD(pm, pn);
+          }
         }
         once = false;
       }
@@ -265,7 +269,7 @@ void calc_coarse_pressure(const matrix &fP, const matrix &st, matrix &cP,
     }
   }
 }
-/*
+
 // __________________________________________________________________
 void prepareCoarseSizes(std::vector<std::size_t> &gridLen1,
                         std::vector<std::size_t> &gridLen2,

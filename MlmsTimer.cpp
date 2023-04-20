@@ -12,8 +12,8 @@
 void runTimerLoops() {
   const double size = 1000;
 
-  const std::size_t size_p = 500;
-  std::size_t grid = 500;
+  const int size_p = 500;
+  int grid = 500;
 
   const double v = 0;
   const double E = 1;

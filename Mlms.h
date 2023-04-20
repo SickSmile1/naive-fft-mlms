@@ -9,23 +9,23 @@
 
 struct matrix{
   // data container for pressure arrays, grid and result
-  std::array<std::size_t, 2> shape;
+  std::array<int, 2> shape;
   std::vector<double> data;
 
   // constructor, to initialize simulated 2d array in a 1d shape
-  explicit matrix(std::array<std::size_t, 2> shape_) : shape(shape_) {
+  explicit matrix(std::array<int, 2> shape_) : shape(shape_) {
     data.resize(shape[0]*shape[1]);
   }
 
   // overload () for aquiring (conversion) i,j idexes in 1d array
-  double& operator() (std::size_t i, std::size_t j) {
+  double& operator() (int i, int j) {
     assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 
   // overload () for aquiring (conversion) i,j indexes in 1d array
   // in static form
-  const double& operator() (std::size_t i, std::size_t j) const {
+  const double& operator() (int i, int j) const {
     assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
@@ -78,16 +78,20 @@ void prepareCoarseSizes(std::vector<std::size_t> &gridLen1, // NOLINT
 
 bool boundaryCheck(matrix &m, int i, int j); // NOLINT
 
-void correctionSteps(matrix& cC, const matrix& st, std::size_t mc, int t, int fineSizeA, // Nolint
-    int fineSizeB, int halfSize);
+void correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
+                    int t, int fineSizeA,
+                    int fineSizeB, int halfSize);
 
 
-void applyCorrection(matrix &coarseDisplacement, const matrix cC, const matrix Ip, int t);
+void applyCorrection(matrix &coarseDisplacement, const matrix cC, // NOLINT
+                     const matrix Ip, int t);
 
 double correctionHelper(const matrix& cC, const matrix& Ip, int t,
-    int i, int j);
+                        int i, int j);
 
-void interpolateGrid(matrix &nextDisplacement, const matrix coarseDisplacement, const matrix st);
+void interpolateGrid(matrix &nextDisplacement, // NOLINT
+                     const matrix coarseDisplacement, // NOLINT
+                     const matrix st);
 /*void deflectionCorrection(matrix &kM, const double mc,
                 const matrix &cC, const matrix &cP, const std::size_t t);
 
