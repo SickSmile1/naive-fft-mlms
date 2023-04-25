@@ -129,7 +129,7 @@ void initializeStylusArray(matrix &st, int t) { // NOLINT
 }
 
 // __________________________________________________________________
-void calcCoarsePressure(const std::vector<double>& qs,
+void calcCoarsePressure(const std::vector<int>& qs,
                         std::vector<matrix>& pFVec,
                         std::vector<matrix>& cDVec,
                         int t, const matrix& st) {
@@ -199,9 +199,9 @@ void myBreakpoint() {}
 void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     double fineSizeA, double fineSizeB, double halfSize) {
   int ts = t;
-  myBreakpoint();
-  std::cout << halfSize << " halfsize inside correction \n";
-  std::cout << mc << " this is mc\n";
+  // myBreakpoint();
+  // std::cout << halfSize << " halfsize inside correction \n";
+  // std::cout << mc << " this is mc\n";
   for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
       cC(i+mc, j+mc) = 0;
@@ -301,11 +301,51 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
 
 // __________________________________________________________________
 void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
-                          double fineSizeB, double hS, const matrix&
-                          pF, matrix& cD) {
+                          double fineSizeB, double hS,
+                          const matrix& pF, matrix& cD,
+                          const std::vector<matrix> &cCVec) {
+  int shape = cD.shape[0];
+  int t = mc/2;
+  std::cout << "shape cd: " << shape << " shape pf: " << pF.shape[0] << std::endl;
+  for (int i = 0; i < shape; i++) {
+    for (int j = 0; j < shape; j++) {
+      double correction = 0;
+      bool iEven = (i%2) == 0;
+      bool jEven = (j%2) == 0;
+      bool bounds = true;
+      for (int k = -mc; k <= mc; k++) {
+        for (int l = -mc; l <= mc; l++) {
+          int pi = i-k;
+          int pj = j-l;
+          if (boundaryCheck(pF, pi, pj)){
+            correction += ((!iEven)&jEven) * cCVec[0](k+mc, l+mc)*pF(pi, pj);
+             // cC2(k+mc, l+mc)*pF(pi, pj);
+            correction += (iEven&(!jEven)) *  cCVec[1](k+mc, l+mc)*pF(pi, pj);
+            // cC3(k+mc, l+mc)*pF(pi, pj);
+            correction += ((!iEven)&(!jEven)) *  cCVec[2](k+mc, l+mc)*pF(pi, pj);
+            // cC4(k+mc, l+mc)*pF(pi, pj);
+          //} else }
+            //bounds = false;
+          }
+        }
+      }
+      //if(!bounds) {
+       // std::cout << "i: " << i << " j: " << j << std::endl;
+      //  bounds = true;
+      //}
+      cD(i, j) += correction;
+    }
+  }
+}
+
+
+// __________________________________________________________________
+void createCorrectionArrays(std::vector<matrix> &cCVec, 
+                            const matrix &st, double hS, 
+                            double fineSizeA, double fineSizeB,
+                            int mc) {
   int tempMc = 2*mc+1;
   int t = mc/2;
-  matrix cC({tempMc, tempMc});
   matrix cC2({tempMc, tempMc});
   matrix cC3({tempMc, tempMc});
   matrix cC4({tempMc, tempMc});
@@ -317,36 +357,16 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
         for (int l = 1; l <= t*2; l++) {
           res4 +=  st(k-1, 0)*st(l-1,0) * 
                 calculate(i+2*(k-t)-1, j+2*(l-t)-1, hS, hS, fineSizeA, fineSizeB);
-          res3 += (st(l-1,0) * calculate(i, j+2*(l-t)-1, hS, hS, fineSizeA,
-                fineSizeB)) * (k==1);
         }
         res2 += st(k-1, 0) * calculate(i+2*(k-t)-1, j, hS, hS, fineSizeA, fineSizeB);
+        res3 += st(k-1, 0) * calculate(i, j+2*(k-t)-1, hS, hS, fineSizeA, fineSizeB);
       }
-      cC(i+mc, j+mc) = 0;
       cC2(i+mc, j+mc) = K-res2;
       cC3(i+mc, j+mc) = K-res3;
       cC4(i+mc, j+mc) = K-res4;
     }
   }
-  int shape = cD.shape[0];
-  for (int i = 0; i < shape; i++) {
-    for (int j = 0; j < shape; j++) {
-      double correction = 0;
-      bool iEven = (i%2) == 0;
-      bool jEven = (j%2) == 0;
-      for (int k = -mc; k <= mc; k++) {
-        for (int l = -mc; l <= mc; l++) {
-          int pi = i-k;
-          int pj = j-l;
-          if (boundaryCheck(pF, pi, pj)){
-            correction += ((!iEven)&jEven) * cC2(k+mc, l+mc)*pF(pi, pj);
-            correction += (iEven&(!jEven)) * cC3(k+mc, l+mc)*pF(pi, pj);
-            correction += ((!iEven)&(!jEven)) * cC4(k+mc, l+mc)*pF(pi, pj);
-          }
-        }
-      }
-      cD(i, j) += correction;
-    }
-  }
+  cCVec.push_back(cC2);
+  cCVec.push_back(cC3);
+  cCVec.push_back(cC4);
 }
-

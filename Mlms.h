@@ -66,7 +66,7 @@ double calc_displacement(const matrix &pressure,
                 double v, double E,
                 double cell);
 
-void calcCoarsePressure(const std::vector<double>& qs, std::vector<matrix> &pFVec, // NOLINT
+void calcCoarsePressure(const std::vector<int>& qs, std::vector<matrix> &pFVec, // NOLINT
                         std::vector<matrix> &cDVec,
                         int t, const matrix& st);
 // printing function for the data container
@@ -106,6 +106,11 @@ void interpolateGrid(matrix &nextDisplacement, // NOLINT
 
 void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
                           double fineSizeB, double hS, const matrix& // NOLINT
-                          pF, matrix& cD); // NOLINT
-void myBreakpoint();
+                          pF, matrix& cD, const std::vector<matrix> &cCVec); // NOLINT
+
+
+void createCorrectionArrays(std::vector<matrix> &cCVec, 
+                            const matrix &st, double hS, 
+                            double fineSizeA, double fineSizeB,
+                            int mc);
 #endif  // MLMS_H_
