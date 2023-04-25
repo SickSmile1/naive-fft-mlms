@@ -16,7 +16,13 @@ struct matrix{
   explicit matrix(std::array<int, 2> shape_) : shape(shape_) {
     data.resize(shape[0]*shape[1]);
   }
+  auto begin() {
+    return data.begin();
+  }
 
+  auto end() {
+    return data.end();
+  }
   // overload () for aquiring (conversion) i,j idexes in 1d array
   double& operator() (int i, int j) {
     assert(i < shape[0] && j < shape[1]);
@@ -38,7 +44,7 @@ void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
 // initialization with 0 for all elements
 void initializeDisplacementArray(matrix &Ic); // NOLINT
 
-
+void initializeStylusArray(matrix &st, int t);
 
 // most outer loop, for we need a n*n loop for the algorithm
 void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
@@ -50,6 +56,8 @@ void calculation_loop2(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
 // inner loop calling the calulation for every n
 double calculate(double a, double b, double x, double y);
 
+double calculate(int i, int j, double dxc, double dyc,
+    double dxf, double dyf);
 // actual calculation
 double calc_displacement(const matrix &pressure,
                 const matrix &Ic,
@@ -58,6 +66,9 @@ double calc_displacement(const matrix &pressure,
                 double v, double E,
                 double cell);
 
+void calcCoarsePressure(const std::vector<double>& qs, std::vector<matrix> &pFVec, // NOLINT
+                        std::vector<matrix> &cDVec,
+                        int t, const matrix& st);
 // printing function for the data container
 void printarray(const matrix &array);
 
@@ -79,8 +90,8 @@ void prepareCoarseSizes(std::vector<std::size_t> &gridLen1, // NOLINT
 bool boundaryCheck(matrix &m, int i, int j); // NOLINT
 
 void correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
-                    int t, int fineSizeA,
-                    int fineSizeB, int halfSize);
+                    int t, double fineSizeA,
+                    double fineSizeB, double halfSize);
 
 
 void applyCorrection(matrix &coarseDisplacement, const matrix cC, // NOLINT
@@ -92,19 +103,9 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
 void interpolateGrid(matrix &nextDisplacement, // NOLINT
                      const matrix coarseDisplacement, // NOLINT
                      const matrix st);
-/*void deflectionCorrection(matrix &kM, const double mc,
-                const matrix &cC, const matrix &cP, const std::size_t t);
 
-void calcCorrMatrix(matrix &correctionCoefficients, const double mc,
-                const matrix &st, const std::size_t t,
-                const double fineSizeA, const double fineSizeB);
-
-
-void coarseToFineGrid(const matrix &cM, matrix &kM, const matrix &st,
-                const std::size_t t);
-
-void fineGridCorrection(matrix &kM, const matrix &st,
-               const double mc, const std::size_t ts,
-               const matrix fP);*/
+void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
+                          double fineSizeB, double hS, const matrix& // NOLINT
+                          pF, matrix& cD); // NOLINT
 void myBreakpoint();
 #endif  // MLMS_H_
