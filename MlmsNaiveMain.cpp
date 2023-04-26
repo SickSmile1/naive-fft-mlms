@@ -6,16 +6,15 @@
 #include "./Mlms.h"
 
 int main() {
-  const double PI = 3.141592653589793238463;
 
   // initial size and pressure values
   const double size = 2;
   const double size_p = 1;
-  double pressure = 1.;
+  const double pressure = 1.;
 
   // initial grid size for initialization
-  int grid1 = 64;
-  int grid2 = 64;
+  int grid1 = 564;
+  int grid2 = 564;
 
   double fineSizeA = size / grid1;
   double fineSizeB = size / grid2;
@@ -75,7 +74,7 @@ int main() {
   calcCoarsePressure(qs, pfVec, cDVec, t, st);
 
   int shape = pfVec[d].shape[0];
-  matrix coarseDisplacement({shape, shape});
+  #pragma omp parallel for simd
   for (int i = 0; i < shape; ++i) {
     for (int j = 0; j < shape; ++j) {
  
@@ -87,12 +86,15 @@ int main() {
       }
     }
   }
+  //calculation_loop(cDVec[d], pfVec[d], coarseSize, v, E);
+
   
   for (int i = 0; i < qs.size(); i++) {
     double hS = fineSizeA*pow(2, d-i-1);
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     correctionSteps(cC, st, mc, t, fineSizeA, fineSizeB, hS);
+    // return 0;
     applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
     interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
     secondCorrectionStep(mc, st, fineSizeA, fineSizeB, hS,

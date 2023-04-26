@@ -95,8 +95,7 @@ double calc_displacement(const matrix &pressure,
       double xj = (x*cell)-(j*cell);
       double yi = (y*cell)-(i*cell);
       // std::cout << "xi: " << xj << " yi: " << yi << std::endl;
-      res += calculate(a, b, xj, yi) *
-                            ((1-v)/(PI*E)) * pressure(i, j);
+      res += calculate(a, b, xj, yi) * pressure(i, j);
     }
   }
   return res;
@@ -153,27 +152,24 @@ void calcCoarsePressure(const std::vector<int>& qs,
         }
         bool once = true;
         for (int k = 1; k <= 2*t; k++) {
+          int pi = i+2*(k-t)-1;
+          int pj2 = j+2*(k-t)-1;
           for (int l = 1; l <= 2*t; l++) {
-            int pi = i+2*(k-t)-1;
             int pj = j+2*(l-t)-1;
-            //res += (boundaryCheck(pF, pi, j)&(l==1)) ? st(k-1, 0)*pF(pi, j): {0; std::cout << i << " : " << j <<std::endl;};
-            if (boundaryCheck(pFVec[coarse], pi, j)&(l==1)) {
-              res += st(k-1, 0)*pFVec[coarse](pi, j);
-            } else {
-              res += 0;
-              // std::cout << i << " : " << j <<std::endl;
-            }
-            res += (boundaryCheck(pFVec[coarse], i, pj)&once) ?
-                    st(l-1, 0)*pFVec[coarse](i, pj): 0;
             res += boundaryCheck(pFVec[coarse], pi, pj) ?
                     st(k-1, 0)*st(l-1, 0)*pFVec[coarse](pi, pj) : 0;
           }
-          once = false; 
+          if (boundaryCheck(pFVec[coarse], pi, j)) {
+            res += st(k-1, 0)*pFVec[coarse](pi, j);
+          }
+          res += (boundaryCheck(pFVec[coarse], i, pj2)) ?
+                  st(k-1, 0)*pFVec[coarse](i, pj2): 0;
+           
         }
         pC(m, n) = res;
       }
     }
-    writeToFile(pC, "./tests/coarsened_"+std::to_string(qs[level]));
+    // writeToFile(pC, "./tests/coarsened_"+std::to_string(qs[level]));
     pFVec.push_back(pC);
     cDVec.push_back(displacement);
     coarse++;
@@ -199,9 +195,6 @@ void myBreakpoint() {}
 void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     double fineSizeA, double fineSizeB, double halfSize) {
   int ts = t;
-  // myBreakpoint();
-  // std::cout << halfSize << " halfsize inside correction \n";
-  // std::cout << mc << " this is mc\n";
   for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
       cC(i+mc, j+mc) = 0;
@@ -211,29 +204,66 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
       double K = calculate(i, j, halfSize, halfSize, fineSizeA, fineSizeB);
       for (int k = 1; k <= 2*t; k++) {
         res1 += st(k-1, 0) * calculate(i-2*(k-ts)+1, j, halfSize, halfSize, fineSizeA, fineSizeB);
-      }
-      for (int l = 1; l <= 2*t; l++) {
-        res2 += st(l-1, 0) * calculate(i, j-2*(l-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
-      }
-      for (int k = 1; k <= 2*t; k++) {
+        res2 += st(k-1, 0) * calculate(i, j-2*(k-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
         for (int l = 1; l <= 2*t; l++) {
           res3 += st(k-1, 0)*st(l-1, 0) * 
             calculate(i-2*(k-ts)+1, j-2*(l-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
         }
       }
-      /*std::cout << res1 << " res1 calked\n";
-      std::cout << res2 << " res2 calked\n";
-      std::cout << res3 << " res3 calked\n";*/
-
+      /*for (int l = 1; l <= 2*t; l++) {
+        res2 += st(l-1, 0) * calculate(i, j-2*(l-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
+      }*/
+      //for (int k = 1; k <= 2*t; k++) {
+      //}
       cC(i+mc, j+mc) += ((!iEven)&jEven)*(K-res1);
       cC(i+mc, j+mc) += (iEven&(!jEven))*(K-res2);
       cC(i+mc, j+mc) += ((!iEven)&(!jEven))*(K-res3);
-      cC(i+mc, j+mc) += (iEven&jEven)*0;
+      // std::cout << cC(i+mc, j+mc) << std:: endl;
     }
-    //return;
   }
-  // writeToFile(cC, "./tests/cC");
-  // printarray(cC);
+  /*writeToFile(cC, "./tests/cc1");
+  for (int i = -mc; i < mc; i+=2) {
+    for (int j = -mc; j < mc; j+=2) {
+      //std::cout << "j: " << j+1 << " i:" << i << std:: endl;
+      //std::cout << "j: " << j << " i:" << i+1 << std:: endl;
+      //std::cout << "j: " << j+1 << " i:" << i+1 << std:: endl;
+      cC(i+mc, j+mc) = 0;
+      cC(i+mc, j+1+mc) = 0;
+      cC((i+1)+mc, j+mc) = 0;
+      cC((i+1)+mc, (j+1)+mc) = 0;
+      double k_odd_j = calculate(i, j+1, halfSize, halfSize, fineSizeA, fineSizeB);
+      double k_odd_i = calculate(i+1, j, halfSize, halfSize, fineSizeA, fineSizeB);
+      double k_odd_i_j = calculate(i+1, j+1, halfSize, halfSize, fineSizeA, fineSizeB);
+      double odd_j = 0, odd_i = 0, odd_i_j = 0;
+      
+      for (int k = 1; k <= 2*t; k++) {
+        odd_j += st(k-1, 0) * calculate(i-2*(k-ts)+1, j+1, halfSize, halfSize, fineSizeA, fineSizeB);
+        odd_i += st(k-1, 0) * calculate(i+1, j-2*(k-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
+        for (int l = 1; l <= 2*t; l++) {
+          odd_i_j += st(k-1, 0) * st(l-1, 0) *
+            calculate((i+1)-2*(k-ts)+1, (j+1)-2*(l-ts)+1,
+                      halfSize, halfSize, fineSizeA, fineSizeB);
+        }
+      }
+      cC(i+mc, (j+1)+mc) += k_odd_j - odd_j;
+      cC((i+1)+mc, j+mc) += k_odd_i - odd_i;
+      cC((i+1)+mc, (j+1)+mc) += k_odd_i_j - odd_i_j;
+      //std::cout << cC(i+1+mc, j+mc) << std:: endl;
+      //std::cout << cC(i+mc, j+1+mc) << std:: endl;
+      //std::cout << cC(i+1+mc, j+1+mc) << std:: endl;
+    }
+  }
+  for (int i = -mc; i < mc; i+=2) {
+    double K1 = calculate(mc, i+1, halfSize, halfSize, fineSizeA, fineSizeB);
+    cC(2*mc, i+1) = 0;
+    double res1 = 0;
+    for (int k = 1; k <= 2*t; k++) {
+      res1 += st(k-1, 0) * calculate(mc, (i+1)-2*(k-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
+    }
+    cC(2*mc, i+1) += K1 - res1;
+  }
+  writeToFile(cC, "./tests/cc2");*/
+  // cC(2*mc, 2*mc) = 0;
 }
 
 // __________________________________________________________________
