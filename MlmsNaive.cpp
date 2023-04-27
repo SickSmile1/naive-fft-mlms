@@ -94,7 +94,6 @@ double calc_displacement(const matrix &pressure,
     for (int j = 0; j < Ic.shape[1]; j+=1) {
       double xj = (x*cell)-(j*cell);
       double yi = (y*cell)-(i*cell);
-      // std::cout << "xi: " << xj << " yi: " << yi << std::endl;
       res += calculate(a, b, xj, yi) * pressure(i, j);
     }
   }
@@ -112,16 +111,14 @@ void initializeMultiplicationArray(matrix &Ic) { // NOLINT
 
 // __________________________________________________________________
 void initializeStylusArray(matrix &st, int t) { // NOLINT
-  initializeMultiplicationArray(st);
-  // calculate transfer stylus (8)
+  // initializeMultiplicationArray(st);
   for (int i = 1; i <= 2*t; i++) {
+    st(i-1, 0) = 1;
     for (int j = 1; j <= 2*t; j++) {
       if (j != i) {
-        // std::cout << st(i, 0) << " : ";
         double divider = (2.0*t-2.0*j)+1;
         double divisor = (2.0*i-2.0*j);
         st(i-1, 0) *= (divider/ divisor);
-        // std::cout << st(i, 0) << std::endl;
       }
     }
   }
@@ -129,12 +126,12 @@ void initializeStylusArray(matrix &st, int t) { // NOLINT
 
 // __________________________________________________________________
 void calcCoarsePressure(const std::vector<int>& qs,
-                        std::vector<matrix>& pFVec,
-                        std::vector<matrix>& cDVec,
+                        std::vector<matrix>& pFVec, // NOLINT
+                        std::vector<matrix>& cDVec, // NOLINT
                         int t, const matrix& st) {
   int coarse = 0;
   for (int level = 0; level <= qs.size()-1; level++) {
-    std::cout << qs[level] << "thats grid size\n";
+    // std::cout << qs[level] << "thats grid size\n";
     matrix pC({qs[level], qs[level]});
     matrix displacement({qs[level], qs[level]});
     for (int m = 0; m < pC.shape[0]; m++) {
@@ -164,7 +161,6 @@ void calcCoarsePressure(const std::vector<int>& qs,
           }
           res += (boundaryCheck(pFVec[coarse], i, pj2)) ?
                   st(k-1, 0)*pFVec[coarse](i, pj2): 0;
-           
         }
         pC(m, n) = res;
       }
@@ -195,7 +191,7 @@ void myBreakpoint() {}
 void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     double fineSizeA, double fineSizeB, double halfSize) {
   int ts = t;
-  for (int i = -mc; i <= mc; i++) {
+  /*for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
       cC(i+mc, j+mc) = 0;
       bool iEven = (i%2) == 0;
@@ -210,35 +206,29 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
             calculate(i-2*(k-ts)+1, j-2*(l-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
         }
       }
-      /*for (int l = 1; l <= 2*t; l++) {
-        res2 += st(l-1, 0) * calculate(i, j-2*(l-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
-      }*/
-      //for (int k = 1; k <= 2*t; k++) {
-      //}
       cC(i+mc, j+mc) += ((!iEven)&jEven)*(K-res1);
       cC(i+mc, j+mc) += (iEven&(!jEven))*(K-res2);
       cC(i+mc, j+mc) += ((!iEven)&(!jEven))*(K-res3);
-      // std::cout << cC(i+mc, j+mc) << std:: endl;
     }
-  }
-  /*writeToFile(cC, "./tests/cc1");
+  }*/
   for (int i = -mc; i < mc; i+=2) {
     for (int j = -mc; j < mc; j+=2) {
-      //std::cout << "j: " << j+1 << " i:" << i << std:: endl;
-      //std::cout << "j: " << j << " i:" << i+1 << std:: endl;
-      //std::cout << "j: " << j+1 << " i:" << i+1 << std:: endl;
       cC(i+mc, j+mc) = 0;
       cC(i+mc, j+1+mc) = 0;
       cC((i+1)+mc, j+mc) = 0;
       cC((i+1)+mc, (j+1)+mc) = 0;
-      double k_odd_j = calculate(i, j+1, halfSize, halfSize, fineSizeA, fineSizeB);
-      double k_odd_i = calculate(i+1, j, halfSize, halfSize, fineSizeA, fineSizeB);
-      double k_odd_i_j = calculate(i+1, j+1, halfSize, halfSize, fineSizeA, fineSizeB);
+      double k_odd_j = calculate(i, j+1, halfSize, halfSize,
+                                  fineSizeA, fineSizeB);
+      double k_odd_i = calculate(i+1, j, halfSize, halfSize,
+                                  fineSizeA, fineSizeB);
+      double k_odd_i_j = calculate(i+1, j+1, halfSize, halfSize,
+                                    fineSizeA, fineSizeB);
       double odd_j = 0, odd_i = 0, odd_i_j = 0;
-      
       for (int k = 1; k <= 2*t; k++) {
-        odd_j += st(k-1, 0) * calculate(i-2*(k-ts)+1, j+1, halfSize, halfSize, fineSizeA, fineSizeB);
-        odd_i += st(k-1, 0) * calculate(i+1, j-2*(k-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
+        odd_j += st(k-1, 0) * calculate(i, j+1-2*(k-ts)+1, halfSize, halfSize,
+                                        fineSizeA, fineSizeB);
+        odd_i += st(k-1, 0) * calculate(i+1-2*(k-ts)+1, j, halfSize, halfSize,
+                                        fineSizeA, fineSizeB);
         for (int l = 1; l <= 2*t; l++) {
           odd_i_j += st(k-1, 0) * st(l-1, 0) *
             calculate((i+1)-2*(k-ts)+1, (j+1)-2*(l-ts)+1,
@@ -248,9 +238,6 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
       cC(i+mc, (j+1)+mc) += k_odd_j - odd_j;
       cC((i+1)+mc, j+mc) += k_odd_i - odd_i;
       cC((i+1)+mc, (j+1)+mc) += k_odd_i_j - odd_i_j;
-      //std::cout << cC(i+1+mc, j+mc) << std:: endl;
-      //std::cout << cC(i+mc, j+1+mc) << std:: endl;
-      //std::cout << cC(i+1+mc, j+1+mc) << std:: endl;
     }
   }
   for (int i = -mc; i < mc; i+=2) {
@@ -258,16 +245,17 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     cC(2*mc, i+1) = 0;
     double res1 = 0;
     for (int k = 1; k <= 2*t; k++) {
-      res1 += st(k-1, 0) * calculate(mc, (i+1)-2*(k-ts)+1, halfSize, halfSize, fineSizeA, fineSizeB);
+      res1 += st(k-1, 0) * calculate(mc, (i+1)-2*(k-ts)+1, halfSize, halfSize,
+                                      fineSizeA, fineSizeB);
     }
     cC(2*mc, i+1) += K1 - res1;
   }
-  writeToFile(cC, "./tests/cc2");*/
+  // writeToFile(cC, "./tests/cc2");
   // cC(2*mc, 2*mc) = 0;
 }
 
 // __________________________________________________________________
-void applyCorrection(matrix &cD, const matrix cC, 
+void applyCorrection(matrix &cD, const matrix cC, // NOLINT
                       const matrix Ip, // NOLINT
                       int t) {
   for (int i = 0; i < cD.shape[0]; i++) {
@@ -297,7 +285,51 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
 // __________________________________________________________________
 void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
   int t = st.shape[0]/2;
-  for (int i = 0; i < fD.shape[0]; i++) {
+  int shape = fD.shape[0]-1;
+  int evenGrid = (shape%2) == 0;
+  if (evenGrid) shape -= 1;
+  for (int i = 0; i < shape; i+=2) {
+    for (int j = 0; j < shape; j+=2) {
+      int m = (i + 1) / 2 + t - 1;
+      int n = (j + 1) / 2 + t - 1;
+      int m_1 = (i + 1 + 1) / 2 + t - 1;
+      int n_1 = (j + 1 + 1) / 2 + t - 1;
+
+      double fDoddi = 0;
+      double fDoddj = 0;
+      double fDoddij = 0;
+      for (int k = 1; k <= 2*t; k++) {
+        int pm_1 = m_1+k-t-1;
+        int pn_1 = n_1+k-t-1;
+
+        // fD(i+1, j) #TOTEST
+        fDoddi += st(k-1, 0) * cD(pm_1, n);
+        // fD(i, j+1)
+        fDoddj += (st(k-1, 0) * cD(m, pn_1));
+
+        for (int l = 1; l <= 2*t; l++) {
+          int pn_1 = n_1+l-t-1;
+          // fD(i+1, j+1)
+          fDoddij += st(k-1, 0) * st(l-1, 0) * cD(pm_1, pn_1);
+        }
+      }
+      fD(i+1, j) += fDoddi;
+      fD(i, j+1) += fDoddj;
+      fD(i+1, j+1) += fDoddij;
+      fD(i, j) = cD(m, n);
+    }
+  }
+  if (evenGrid) {
+    for (int i = 0; i < shape+1; i+=2) {
+      for (int k = 1; k <= 2*t; k++) {
+        int m = (i + 1 + 1) / 2 + t - 1;
+        int n_1 = (shape + 1) / 2 + t - 1;
+        int pn_1 = n_1+k-t-1;
+        fD(shape, i+1) += (st(k-1, 0) * cD(m, pn_1));
+      }
+    }
+  }
+  /*for (int i = 0; i < fD.shape[0]; i++) {
     for (int j = 0; j < fD.shape[1]; j++) {
       bool iEven = (i%2) == 0;
       bool jEven = (j%2) == 0;
@@ -319,24 +351,84 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
         }
         once = false;
       }
-      // fD(i, j) += (iEven&jEven)*res;
-      // fD(i, j) += (iEven&jEven)*res1;
-      // fD(i, j) += (iEven&jEven)*res2;
       if (boundaryCheck(cD, (i+1)/2+t-1, (j+1)/2+t-1)) {
         fD(i, j) += (iEven&jEven)*cD((i+1)/2+t-1, (j+1)/2+t-1);
       }
     }
-  }
+  }*/
 }
 
 // __________________________________________________________________
 void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
                           double fineSizeB, double hS,
-                          const matrix& pF, matrix& cD,
+                          const matrix& pF, matrix& cD, // NOLINT
                           const std::vector<matrix> &cCVec) {
   int shape = cD.shape[0];
+  std::cout << shape << std::endl;
+  bool evenGrid = false;
+  if ((shape%2) == 1) {
+    shape -= 1;
+    evenGrid = true;
+  }
   int t = mc/2;
-  std::cout << "shape cd: " << shape << " shape pf: " << pF.shape[0] << std::endl;
+  for (int i = 0; i < shape; i+=2) {
+    for (int j = 0; j < shape; j+=2) {
+      double oddi = 0;
+      double oddj = 0;
+      double oddij = 0;
+      for (int k = -mc; k <= mc; k++) {
+        for (int l = -mc; l <= mc; l++) {
+          int pi = i-k;
+          int pj = j-l;
+          if (boundaryCheck(pF, pi+1, pj+1)) {
+            oddj += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
+            oddi += cCVec[0](k+mc, l+mc)*pF(pi+1, pj);
+            oddij += cCVec[2](k+mc, l+mc)*pF(pi+1, pj+1);
+          }
+        }
+      }
+      cD(i+1, j) += oddi;
+      cD(i, j+1) += oddj;
+      cD(i+1, j+1) += oddij;
+    }
+  }
+  /*for (int i = 0; i <= mc; i+=2) {
+    for (int j = 0; j <= mc; j+=2) {
+      double oddi = 0;
+      double oddj = 0;
+      double oddij = 0;
+      for (int k = i; k <= mc; k++) {
+        for (int l = j; l <= mc; l++) {
+          int pi = i-k;
+          int pj = j-l;
+          if (boundaryCheck(pF, pi+1, pj+1)){
+            oddj += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
+            oddi += cCVec[0](k+mc, l+mc)*pF(pi+1, pj);
+            oddij += cCVec[2](k+mc, l+mc)*pF(pi+1, pj+1);
+          }
+        }
+      }
+      cD(i+1, j) += oddi;
+      cD(i, j+1) += oddj;
+      cD(i+1, j+1) += oddij;
+
+    }
+  }*/
+  if (evenGrid) {
+    for (int j = 0; j < shape; j+=2) {
+      // std:: cout << "i:" << shape << " j:" << j << std::endl;
+      for (int k = -mc; k <= mc; k++) {
+        for (int l = -mc; l <= mc; l++) {
+          int pi = shape-k;
+          int pj = j-l;
+          if (boundaryCheck(pF, pi, pj+1)) {
+            cD(shape, j+1) += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
+          }
+        }
+      }
+    }
+  }
+  /*int shape = cD.shape[0];
   for (int i = 0; i < shape; i++) {
     for (int j = 0; j < shape; j++) {
       double correction = 0;
@@ -349,29 +441,20 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
           int pj = j-l;
           if (boundaryCheck(pF, pi, pj)){
             correction += ((!iEven)&jEven) * cCVec[0](k+mc, l+mc)*pF(pi, pj);
-             // cC2(k+mc, l+mc)*pF(pi, pj);
             correction += (iEven&(!jEven)) *  cCVec[1](k+mc, l+mc)*pF(pi, pj);
-            // cC3(k+mc, l+mc)*pF(pi, pj);
             correction += ((!iEven)&(!jEven)) *  cCVec[2](k+mc, l+mc)*pF(pi, pj);
-            // cC4(k+mc, l+mc)*pF(pi, pj);
-          //} else }
-            //bounds = false;
           }
         }
       }
-      //if(!bounds) {
-       // std::cout << "i: " << i << " j: " << j << std::endl;
-      //  bounds = true;
-      //}
       cD(i, j) += correction;
     }
-  }
+  }*/
 }
 
 
 // __________________________________________________________________
-void createCorrectionArrays(std::vector<matrix> &cCVec, 
-                            const matrix &st, double hS, 
+void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
+                            const matrix &st, double hS, // NOLINT
                             double fineSizeA, double fineSizeB,
                             int mc) {
   int tempMc = 2*mc+1;
@@ -385,11 +468,14 @@ void createCorrectionArrays(std::vector<matrix> &cCVec,
       double res = 0, res2 = 0, res3 = 0, res4 = 0;
       for (int k = 1; k <= t*2; k++) {
         for (int l = 1; l <= t*2; l++) {
-          res4 +=  st(k-1, 0)*st(l-1,0) * 
-                calculate(i+2*(k-t)-1, j+2*(l-t)-1, hS, hS, fineSizeA, fineSizeB);
+          res4 +=  st(k-1, 0)*st(l-1, 0) *
+                calculate(i+2*(k-t)-1, j+2*(l-t)-1, hS, hS,
+                          fineSizeA, fineSizeB);
         }
-        res2 += st(k-1, 0) * calculate(i+2*(k-t)-1, j, hS, hS, fineSizeA, fineSizeB);
-        res3 += st(k-1, 0) * calculate(i, j+2*(k-t)-1, hS, hS, fineSizeA, fineSizeB);
+        res2 += st(k-1, 0) * calculate(i+2*(k-t)-1, j, hS, hS,
+                                        fineSizeA, fineSizeB);
+        res3 += st(k-1, 0) * calculate(i, j+2*(k-t)-1, hS, hS,
+                                        fineSizeA, fineSizeB);
       }
       cC2(i+mc, j+mc) = K-res2;
       cC3(i+mc, j+mc) = K-res3;

@@ -10,10 +10,10 @@
 #include "MlmsWriteToFile.h"
 
 void runTimerLoops() {
-  const double size = 1000;
+  const double size = 2;
 
-  const int size_p = 500;
-  int grid = 500;
+  const double size_p = 1;
+  int grid = 64;
 
   const double v = 0;
   const double E = 1;
@@ -21,7 +21,7 @@ void runTimerLoops() {
 
   matrix result({20, 2});
   int iteration;
-  for (iteration = 0; iteration < 2; iteration++) {
+  for (iteration = 0; iteration < 1; iteration++) {
     double cell_size = size/grid;
 
     matrix Ic({grid, grid});
@@ -43,7 +43,7 @@ void runTimerLoops() {
     std::string name = std::to_string(grid);
     name += "_grid";
 
-    // writeToFile(Ic, name);
+    writeToFile(Ic, name);
     grid += 20;
   }
   writeToFile(result, "timings.txt");

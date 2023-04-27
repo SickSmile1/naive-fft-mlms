@@ -44,13 +44,10 @@ void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
 // initialization with 0 for all elements
 void initializeDisplacementArray(matrix &Ic); // NOLINT
 
-void initializeStylusArray(matrix &st, int t);
+void initializeStylusArray(matrix &st, int t); // NOLINT
 
 // most outer loop, for we need a n*n loop for the algorithm
 void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
-                 double v, double E);
-
-void calculation_loop2(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
                  double v, double E);
 
 // inner loop calling the calulation for every n
@@ -58,6 +55,7 @@ double calculate(double a, double b, double x, double y);
 
 double calculate(int i, int j, double dxc, double dyc,
     double dxf, double dyf);
+
 // actual calculation
 double calc_displacement(const matrix &pressure,
                 const matrix &Ic,
@@ -67,7 +65,7 @@ double calc_displacement(const matrix &pressure,
                 double cell);
 
 void calcCoarsePressure(const std::vector<int>& qs, std::vector<matrix> &pFVec, // NOLINT
-                        std::vector<matrix> &cDVec,
+                        std::vector<matrix> &cDVec, // NOLINT
                         int t, const matrix& st);
 // printing function for the data container
 void printarray(const matrix &array);
@@ -109,8 +107,8 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
                           pF, matrix& cD, const std::vector<matrix> &cCVec); // NOLINT
 
 
-void createCorrectionArrays(std::vector<matrix> &cCVec, 
-                            const matrix &st, double hS, 
+void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
+                            const matrix &st, double hS,
                             double fineSizeA, double fineSizeB,
                             int mc);
 #endif  // MLMS_H_
