@@ -25,14 +25,14 @@ struct matrix{
   }
   // overload () for aquiring (conversion) i,j idexes in 1d array
   double& operator() (int i, int j) {
-    assert(i < shape[0] && j < shape[1]);
+    // assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 
   // overload () for aquiring (conversion) i,j indexes in 1d array
   // in static form
   const double& operator() (int i, int j) const {
-    assert(i < shape[0] && j < shape[1]);
+    // assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 };
@@ -51,9 +51,9 @@ void calculation_loop(matrix &Ic, const matrix &Pa, double cell_size, // NOLINT
                  double v, double E);
 
 // inner loop calling the calulation for every n
-double calculate(double a, double b, double x, double y);
+inline double calculate(double a, double b, double x, double y);
 
-double calculate(int i, int j, double dxc, double dyc,
+inline double calculate(int i, int j, double dxc, double dyc,
     double dxf, double dyf);
 
 // actual calculation
@@ -63,6 +63,9 @@ double calc_displacement(const matrix &pressure,
                 double a, double b,
                 double v, double E,
                 double cell);
+
+void calc_displacement(const matrix &pF, double cS, double fS,
+                         matrix &cD);
 
 void calcCoarsePressure(const std::vector<int>& qs, std::vector<matrix> &pFVec, // NOLINT
                         std::vector<matrix> &cDVec, // NOLINT

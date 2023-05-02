@@ -100,6 +100,23 @@ double calc_displacement(const matrix &pressure,
   return res;
 }
 
+void calc_displacement(const matrix &pF, double cS, double fS,
+                         matrix &cD) {
+  int shape = pF.shape[0];
+  // #pragma omp parallel for simd
+  for (int i = 0; i < shape; ++i) {
+    for (int j = 0; j < shape; ++j) {
+      // inner loop
+      for (int k = 0; k < shape; ++k) {
+        for (int l = 0; l < shape; ++l) {
+          cD(i, j) += calculate(i-k, j-l,  cS, cS,
+                          fS, fS)*pF(k, l);
+        }
+      }
+    }
+  }
+}
+
 // __________________________________________________________________
 void initializeMultiplicationArray(matrix &Ic) { // NOLINT
   for (int i = 0; i < Ic.shape[0]; i++) {
@@ -364,7 +381,7 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
                           const matrix& pF, matrix& cD, // NOLINT
                           const std::vector<matrix> &cCVec) {
   int shape = cD.shape[0];
-  std::cout << shape << std::endl;
+  // std::cout << shape << std::endl;
   bool evenGrid = false;
   if ((shape%2) == 1) {
     shape -= 1;
