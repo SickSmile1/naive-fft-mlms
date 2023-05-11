@@ -1,0 +1,18 @@
+scaling of algorithms
+write about physical problem
+discretized versions 
+
+whats the need for this
+motivation of comparison of algorithms
+
+solutions for improving code
+optimizations
+
+error of the Mlms algorithm (compare fft to mlms)
+
+square norm of |v(mlms)-v(fft)| 
+-> errordecrease with bigger t
+
+
+implement CG algorithm
+

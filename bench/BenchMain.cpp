@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include "Mlms.h"
+#include <iostream>
 #include <cmath>
 
 /*static void bench_alloc_and_null (benchmark::State &state) {
@@ -81,7 +82,7 @@ BENCHMARK(bench_calculation_loop)->Iterations(100);
 BENCHMARK(bench_calculation_loop)->Iterations(100);
 */
 
-static void bench_correction (benchmark::State &state) {
+std::tuple<matrix, matrix, matrix, double, double, double, std::vector> prepareValues() {
   const double size = 2;
   const double size_p = 1;
   const double pressure = 1.;
@@ -90,13 +91,12 @@ static void bench_correction (benchmark::State &state) {
   int grid1 = 440;
 
   double fineSizeA = size / grid1;
-  double fineSizeB = size / grid1;
 
   matrix kM({grid1, grid1});
   matrix Ip({grid1, grid1});
 
   double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
-  double upper_b = (grid1)/2. + (size_p/fineSizeB)/2.;
+  double upper_b = (grid1)/2. + (size_p/fineSizeA)/2.;
 
   initializePressureArray(Ip, lower_b, upper_b, pressure);
   // material moduli and v
@@ -137,38 +137,45 @@ static void bench_correction (benchmark::State &state) {
   double coarseSize = fineSizeA*pow(2, d);
   std::vector<matrix> cCVec;
   cCVec.reserve(3);
+  return [cCVec, pfVec, cDVec, coarseSize, fineSizeA, d, qs];
+}
 
+std::tuple<> void prepareArrays(cCVec, pfVec, st, coarseSize, fineSizeA, mc) {
   // create correction array for second correction -- duration appr.: 2412227 ns
   createCorrectionArrays(cCVec, st, coarseSize, fineSizeA,
-                         fineSizeB, mc);
-  
-  // interpolate pressure to coarse grid -- duration appr.: 10580453 ns 
+                         fineSizeA, mc);
+
+  // interpolate pressure to coarse grid -- duration appr.: 10580453 ns
   calcCoarsePressure(qs, pfVec, cDVec, t, st);
-  
-  
+
+
   // calc displacement of coarsest grid with bousinesque kernel
   // appr.: 8528085 ns
-    calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
-  
-  
-  // for (int i = 0; i < qs.size(); i++) {
-    double hS = fineSizeA*pow(2, d-1) ; // i-1);
+  calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
+}
+
+static void benchmark(state) {
+  cCVec, pfVec, cDVec, coarseSize, fineSizeA, d, qs = prepareValues();
+  prepareArrays();
+  // std::cout << qs.size() << std::endl;
+  for (int i = 0; i < qs.size(); i++) {
+    double hS = fineSizeA*pow(2, d-i-1);
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     // corr step appr. 578155 ns
     correctionSteps(cC, st, mc, t, fineSizeA, fineSizeB, hS);
     // return 0;
     // 178566 ns
-    applyCorrection(cDVec[d], cC, pfVec[d-1], t);// i-1], t);
+    applyCorrection(cDVec[d], cC, pfVec[d-i-1], t);
       
-      // appr. 7694 ns
-      interpolateGrid(cDVec[d-1], cDVec[d], st);// i-1], cDVec[d-i], st);
-    
-    for (auto _ : state) {
-      secondCorrectionStep(mc, st, fineSizeA, fineSizeB, hS,
-                         pfVec[d-1], cDVec[d-1], cCVec);//i-1], cDVec[d-i-1], cCVec);
-    }
-  // }
+    // appr. 7694 ns
+    // appr. 2748693 ns @ 440 @ d-1
+    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
+  
+    // appr. 151398 ns
+    secondCorrectionStep(mc, st, fineSizeA, fineSizeB, hS,
+                       pfVec[d-i-1], cDVec[d-i-1], cCVec);
+  }
   
 
 }

@@ -1,10 +1,10 @@
-CXX = g++ -g -Wall -pedantic -std=c++20 -mtune=native -march=native -fopenmp
+CXX = g++ -g -Wall -pedantic -std=c++20 -fno-omit-frame-pointer -mtune=native -march=native -fopenmp# -fsanitize=address
 # CXX = g++ -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))
 HEADERS = $(wildcard *.h)
 OBJECTS = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard *.cpp))))
-LIBRARIES =
+LIBRARIES = -lfftw3 -lm 
 
 .PRECIOUS: %.o
 .SUFFIXES:

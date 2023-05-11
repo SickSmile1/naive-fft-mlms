@@ -379,6 +379,7 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
                           double fineSizeB, double hS,
                           const matrix& pF, matrix& cD, // NOLINT
                           const std::vector<matrix> &cCVec) {
+  //  42420501 ns @ 440 @ fine
   int shape = cD.shape[0];
   // std::cout << shape << std::endl;
   bool evenGrid = false;
@@ -422,6 +423,7 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
       }
     }
   }
+  // 238925736 ns @ 440 @ d
   /*int shape = cD.shape[0];
   for (int i = 0; i < shape; i++) {
     for (int j = 0; j < shape; j++) {
