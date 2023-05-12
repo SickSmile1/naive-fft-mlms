@@ -36,7 +36,7 @@ void BoussinesqFFT() {
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
 
-  transformToReam(Umn_tild, Umn, Nx, Ny);
+  transformToReal(Umn_tild, Umn, Nx, Ny);
 
   writeToResultArray(Umn, Umn_res, Nx, Ny);
 

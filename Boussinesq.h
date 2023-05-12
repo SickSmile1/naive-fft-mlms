@@ -158,7 +158,7 @@ void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild,  // NOLINT
 void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild,
                         cMatrix& p_tild); // NOLINT
 
-void transformToReam(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny); // NOLINT
+void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny); // NOLINT
 
 void writeToResultArray(const matrix& Umn, matrix& Umn_res,  // NOLINT
                         int Nx, int Ny);
