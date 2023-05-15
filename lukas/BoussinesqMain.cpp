@@ -7,7 +7,7 @@
 
 int main() {
   double Lx = 2, Ly = 2;
-  std::size_t Nx = 16, Ny = 16;
+  std::size_t Nx = 1048, Ny = 1048;
 
   vec2d pixel = {Lx / Nx, Ly / Ny};
 

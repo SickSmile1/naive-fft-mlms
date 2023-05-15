@@ -1,5 +1,6 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 #include "BoussinesqFftTimer.h"
+#include "BoussinesqFft.h"
 #include "Boussinesq.h"
 #include <fftw3.h>
 #include <cmath>

@@ -1,5 +1,6 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 #include "BoussinesqMlmsTimer.h"
+#include "BoussinesqMlms.h"
 #include "Boussinesq.h"
 #include "BoussinesqTimer.h"
 #include <algorithm>

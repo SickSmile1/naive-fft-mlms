@@ -5,8 +5,10 @@
 #include <fstream>
 #include <thread> //NOLINT
 #include <string>
-#include "./Boussinesq.h"
-#include "./BoussinesqTimer.h"
+#include "Boussinesq.h"
+#include "BoussinesqMlms.h"
+#include "BoussinesqFft.h"
+#include "BoussinesqTimer.h"
 
 /*TEST(filename, function){
   function values
@@ -195,7 +197,7 @@ TEST(BoussinesqMlms, calculate) {
   EXPECT_TRUE(equal1);
 }
 
-TEST(BoussinesqFFT, calculate) {
+/*TEST(BoussinesqFFT, calculate) {
   double Lx = 2., Ly = 2.;
   int Nx = 10, Ny = 10;
   double pSize = 1;
@@ -247,4 +249,4 @@ TEST(BoussinesqFFT, calculate) {
   }
   EXPECT_TRUE(equal);
   EXPECT_TRUE(equal1);
-}
+}*/

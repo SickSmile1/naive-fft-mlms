@@ -1,4 +1,4 @@
-CXX = g++ -g -O3 -std=c++20# -fsanitize=address
+CXX = g++ -g -O3 -std=c++20 -mtune=native -march=native -fopenmp# -fsanitize=address
 # CXX = g++ -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))
