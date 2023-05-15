@@ -197,7 +197,7 @@ TEST(BoussinesqMlms, calculate) {
 
 TEST(BoussinesqFFT, calculate) {
   double Lx = 2., Ly = 2.;
-  int Nx = 20, Ny = 20;
+  int Nx = 10, Ny = 10;
   double pSize = 1;
   double dx = (Lx/Nx);
   double dy = (Ly/Ny);
@@ -219,7 +219,7 @@ TEST(BoussinesqFFT, calculate) {
 
   copyPressureArray(p, tempP);
 
-  calculateGmn(Gmn, dx/2, dy/2);
+  calculateGmn(Gmn, dx, dy);
 
   transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
 

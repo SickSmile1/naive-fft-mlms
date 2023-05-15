@@ -12,11 +12,11 @@ void runFastTimerLoops() {
   const double pressure = 1.;
 
   // initial grid size for initialization
-  int grid1 = 4096;
-  int grid2 = 4096;
+  int grid1 = 2048;
+  int grid2 = 2048;
 
   matrix result({100, 2});
-  for (int iteration = 0; iteration < 20; iteration++) {
+  for (int iteration = 0; iteration < 2; iteration++) {
     double fineSizeA = size / grid1;
     double fineSizeB = size / grid2;
 
@@ -31,8 +31,8 @@ void runFastTimerLoops() {
 
     double beta = 0.84;
     double min_g = std::min(grid1, grid2);
-    int t = beta*log(min_g);
-    // int t = 4;
+    //int t = beta*log(min_g);
+    int t = 4;
     int mc = 0.7* pow(min_g, 1./t)-1;
     if (mc < 2*t) {
       mc = 2*t;

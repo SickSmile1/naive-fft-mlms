@@ -501,16 +501,17 @@ void copyPressureArray(matrix& p, const matrix& tempP) {
 
 // __________________________________________________________________
 void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
-  for (int i = 0; i < (Gmn.shape[0]-1)/2; i++) {
-    for (int j = 0; j < (Gmn.shape[0]-1)/2; j++) {
+  for (int i = 0; i <= (Gmn.shape[0])/2; i++) {
+    for (int j = 0; j <= (Gmn.shape[0])/2; j++) {
       Gmn(i, j) = calcBoussinesq(i, j, dx, dy, dx, dy);
-      Gmn(i, j+((Gmn.shape[0]-1)/2)) = calcBoussinesq(i, -j, dx, dy, dx, dy);
-      Gmn(i+((Gmn.shape[0]-1)/2), j) = calcBoussinesq(-i, j, dx, dy, dx, dy);
-      Gmn(i+((Gmn.shape[0]-1)/2), j+((Gmn.shape[0]-1)/2)) =
+      Gmn(i, (Gmn.shape[0]-j)) = calcBoussinesq(i, -j, dx, dy, dx, dy);
+      Gmn((Gmn.shape[0]-i), j) = calcBoussinesq(-i, j, dx, dy, dx, dy);
+      Gmn((Gmn.shape[0]-i), (Gmn.shape[0]-j)) =
         calcBoussinesq(-i, -j, dx, dy, dx, dy);
       // std::cout << Gmn(i, j) << std::endl;
     }
   }
+  printarray(Gmn);
 }
 
 // __________________________________________________________________
