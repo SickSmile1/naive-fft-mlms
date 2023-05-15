@@ -94,7 +94,7 @@ const double size_p = 1;
 const double pressure = 1.;
 
 // initial grid size for initialization
-int grid1 = 256;
+int grid1 = 128;
 
 double fineSizeA = size / grid1;
 
@@ -199,11 +199,11 @@ static void bench_Mlms_2ndCor(benchmark::State &state) {
 // my implementation
 BENCHMARK(bench_Mlms);
 BENCHMARK(bench_Mlms_displacement)->Iterations(25);
-BENCHMARK(bench_Mlms_corrArr);
+/*BENCHMARK(bench_Mlms_corrArr);
 BENCHMARK(bench_Mlms_corrStep);
 BENCHMARK(bench_Mlms_corrStep1);
 BENCHMARK(bench_Mlms_interpolate);
-BENCHMARK(bench_Mlms_2ndCor);
+BENCHMARK(bench_Mlms_2ndCor);*/
 
 // Lukas implementation
 /*
@@ -226,7 +226,7 @@ std::vector<std::vector<matrix1>> fcorrections;
 */
 static void bench_Mlms_lukas(benchmark::State &state) {
   double Lx = 2, Ly = 2;
-  std::size_t Nx = 256, Ny = 256;
+  std::size_t Nx = 128, Ny = 128;
   vec2d pixel = {Lx / Nx, Ly / Ny};
   matrix pressures({Nx, Ny}), displacement({Nx, Ny});
   // initialize pressure
@@ -245,11 +245,11 @@ static void bench_Mlms_lukas(benchmark::State &state) {
     displacement_stack(displacement, pixel, t_l, levels);
 
   auto mc = correction_size(t, pressures.shape);
-  pressure_stack.coarsen();
   
   for (auto _: state) {
-    compute_coarse_displacements(pressure_stack, displacement_stack);
+  pressure_stack.coarsen();
   }
+  // compute_coarse_displacements(pressure_stack, displacement_stack);
 
   // stack.push_back(pressure_stack);
   // stack.push_back(displacement_stack);
