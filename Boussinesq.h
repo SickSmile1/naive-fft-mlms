@@ -7,8 +7,12 @@
 #include <array>
 #include <cassert>
 #include <complex>
+#include <sstream>
+#include <iostream>
 #include <fstream>
 #include <string>
+#include <eigen3/Eigen/Dense>
+#include<eigen3/Eigen/StdVector>
 
 template <class T>
 struct matrixTemplate{
@@ -29,19 +33,20 @@ struct matrixTemplate{
   }
   // overload () for aquiring (conversion) i,j idexes in 1d array
   T& operator() (int i, int j) {
-    //assert(i < shape[0] && j < shape[1]);
+    // assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 
   // overload () for aquiring (conversion) i,j indexes in 1d array
   // in static form
   const T& operator() (int i, int j) const {
-    //assert(i < shape[0] && j < shape[1]);
+    // assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 };
 
 using matrix = matrixTemplate<double>;
+using smatrix = matrixTemplate<std::string>;
 using cMatrix = matrixTemplate<std::complex<double>>;
 
 // printing function for the data container

@@ -2,14 +2,14 @@
 
 #include "./Boussinesq.h"
 // #include "./MlmsTimer.h"
-#include "./BoussinesqMlmsTimer.h"
-// #include "./BoussinesqFftTimer.h"
+// #include "./BoussinesqMlmsTimer.h"
+#include "./BoussinesqFftTimer.h"
 
 int main() {
   // initial size and pressure values
-  runFastTimerLoops();
+  // runFastTimerLoops();
   // runTimerLoops();
-  // BoussinesqFFT();
+  BoussinesqFFT();
   return 0;
 }
 

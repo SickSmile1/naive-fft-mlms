@@ -20,6 +20,7 @@ void initializeStylusArray(matrix &st, int t) { // NOLINT
         double divider = (2.0*t-2.0*j)+1;
         double divisor = (2.0*i-2.0*j);
         st(i-1, 0) *= (divider/ divisor);
+        // std::cout << j << " :" << divider << "/"<<divisor<< std::endl;
       }
     }
   }
@@ -31,6 +32,10 @@ void calcCoarsePressure(const std::vector<int>& qs,
                         std::vector<matrix>& cDVec, // NOLINT
                         int t, const matrix& st) {
   int coarse = 0;
+  for (int i = 0; i < qs.size(); i++) {
+    std::cout << "qs: " << qs[i] << std::endl;
+  }
+  std::cout << pFVec.size() << std::endl;
   for (int level = 0; level <= qs.size()-1; level++) {
     // std::cout << qs[level] << "thats grid size\n";
     matrix pC({qs[level], qs[level]});
@@ -204,14 +209,11 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
         int pm_1 = m_1+k-t-1;
         int pn_1 = n_1+k-t-1;
 
-        // fD(i+1, j) #TOTEST
         fDoddi += st(k-1, 0) * cD(pm_1, n);
-        // fD(i, j+1)
         fDoddj += (st(k-1, 0) * cD(m, pn_1));
 
         for (int l = 1; l <= 2*t; l++) {
           int pn_1 = n_1+l-t-1;
-          // fD(i+1, j+1)
           fDoddij += st(k-1, 0) * st(l-1, 0) * cD(pm_1, pn_1);
         }
       }
@@ -283,9 +285,11 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
           int pi = i-k;
           int pj = j-l;
           if (boundaryCheck(pF, pi+1, pj+1)) {
-            oddj += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
-            oddi += cCVec[0](k+mc, l+mc)*pF(pi+1, pj);
             oddij += cCVec[2](k+mc, l+mc)*pF(pi+1, pj+1);
+          } if (boundaryCheck(pF, pi, pj+1)) {
+            oddj += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
+          } if (boundaryCheck(pF, pi+1, pj)) {
+            oddi += cCVec[0](k+mc, l+mc)*pF(pi+1, pj);
           }
         }
       }
@@ -308,28 +312,6 @@ void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
       }
     }
   }
-  /*for (int i = 0; i <= mc; i+=2) {
-    for (int j = 0; j <= mc; j+=2) {
-      double oddi = 0;
-      double oddj = 0;
-      double oddij = 0;
-      for (int k = i; k <= mc; k++) {
-        for (int l = j; l <= mc; l++) {
-          int pi = i-k;
-          int pj = j-l;
-          if (boundaryCheck(pF, pi+1, pj+1)){
-            oddj += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
-            oddi += cCVec[0](k+mc, l+mc)*pF(pi+1, pj);
-            oddij += cCVec[2](k+mc, l+mc)*pF(pi+1, pj+1);
-          }
-        }
-      }
-      cD(i+1, j) += oddi;
-      cD(i, j+1) += oddj;
-      cD(i+1, j+1) += oddij;
-
-    }
-  }*/
   /*int shape = cD.shape[0];
   for (int i = 0; i < shape; i++) {
     for (int j = 0; j < shape; j++) {

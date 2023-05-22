@@ -87,7 +87,7 @@ void runFastTimerLoops() {
 
     result(iteration, 0) = grid1;
     result(iteration, 1) = stopped;
-    // writeToFile(cDVec[0], "./test_mlms/grid_faster_"+std::to_string(grid1));
+    writeToFile(cDVec[0], "./grid_faster_"+std::to_string(grid1));
     grid1 += 20;
     grid2 += 20;
   }

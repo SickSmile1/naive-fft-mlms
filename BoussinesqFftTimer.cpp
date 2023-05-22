@@ -19,11 +19,11 @@ void BoussinesqFFT() {
 
   matrix tempP({Nx, Ny});
   matrix p({2*Nx, 2*Ny});
-  cMatrix p_tild({2*Nx, 2*Ny});
+  cMatrix p_tild({2*Nx, (2*Ny)/2-1});
   matrix Gmn({2*Nx, 2*Ny});
-  cMatrix Gmn_tild({2*Nx, 2*Ny});
+  cMatrix Gmn_tild({2*Nx, (2*Ny)/2-1});
   matrix Umn({Nx*2, Ny*2});
-  cMatrix Umn_tild({2*Nx, 2*Ny});
+  cMatrix Umn_tild({2*Nx, (2*Ny)/2-1});
   matrix Umn_res({Nx, Ny});
 
   initializePressureArray(tempP, lb, ub, 1.);
@@ -41,5 +41,5 @@ void BoussinesqFFT() {
 
   writeToResultArray(Umn, Umn_res, Nx, Ny);
 
-  writeToFile(Umn_res, "fastestGrid");
+  // writeToFile(Umn_res, "fastestGrid");
 }

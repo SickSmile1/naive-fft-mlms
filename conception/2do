@@ -1,3 +1,5 @@
+paper
+-------------------------------------------------
 scaling of algorithms
 write about physical problem
 discretized versions 
@@ -14,5 +16,20 @@ square norm of |v(mlms)-v(fft)|
 -> errordecrease with bigger t
 
 
+## Code 2do ##
+-------------------------------------------------
+Tests for all functions
+
+FFT
+
+optimization MLMS
+
+update graphs
+
+naming conventions in all 3 implementations (Nx, Ny, Ic, Ip)
+
+
+Bachelor
+-------------------------------------------------
 implement CG algorithm
 
