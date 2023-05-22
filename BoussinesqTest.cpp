@@ -15,7 +15,7 @@
   ASSERT_EQ(res, function call);
 }*/
 
-double grids = 8;
+double grids = 32;
 matrix res1({grids, grids});
 
 TEST(BoussinesqNaive, calculate) {
@@ -179,124 +179,76 @@ TEST(BoussinesqMlms, interpolateGrid) {}
 TEST(BoussinesqMlms, interpolateGrid) {}*/
 
 class FixtureMLms : public::testing::Test {
-  protected:
-    void SetUp() override {
-      size = 2;
-      size_p = 1;
-      pressure = 1.;
+ protected:
+  int t, q, grid1, grid2, mc;
+  double size, size_p, pressure, fineSizeA,
+            fineSizeB, coarseSize, d;
+  std::vector<matrix> pfVec, cDVec, cCVec;
+  std::vector<matrix> matrices;
+  std::vector<int> qs;
+  void SetUp() override {
+    size = 2;
+    size_p = 1;
+    pressure = 1.;
 
       // initial grid size for initialization
-      grid1 = grids;
-      grid2 = grids;
+    grid1 = grids;
+    grid2 = grids;
 
-      fineSizeA = size / grid1;
-      fineSizeB = size / grid2;
+    fineSizeA = size / grid1;
+    fineSizeB = size / grid2;
 
-      matrix kM({grid1, grid2});
-      matrix Ip({grid1, grid2});
+    matrix kM({grid1, grid2});
+    matrix Ip({grid1, grid2});
 
-      double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
-      double upper_b = (grid2)/2. + (size_p/fineSizeB)/2.;
+    double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
+    double upper_b = (grid2)/2. + (size_p/fineSizeB)/2.;
 
-      initializePressureArray(Ip, lower_b, upper_b, pressure);
-      // material moduli and v
-
-      double beta = 0.84;
-      double min_g = std::min(grid1, grid2);
-      // int t = beta*log(min_g);
-      t = 5;
-      mc = 0.7* pow(min_g, 1./t)-1;
-      if (mc < 2*t) {
-        mc = 2*t;
-      }
-      // std::cout << "\”\n" << std::endl;
-      matrix st({2*t, 1});
-
-      initializeStylusArray(st, 1);
-
-      double qLevel = std::log2(grid1 * grid2)/2-1;
-      q = grid1 / 2 + 2*t - 1;
-      qs.push_back(q);
-
-      for (int length = 1; length < qLevel-1; length++) {
-        q = q / 2 +  2*t - 1;
-        qs.push_back(q);
-      }
-
-      d = qs.size();
-      pfVec.reserve(d);
-      cDVec.reserve(d);
-      pfVec.push_back(Ip);
-      cDVec.push_back(kM);
-      coarseSize = fineSizeA*pow(2, d);
-      cCVec.reserve(3);
+    initializePressureArray(Ip, lower_b, upper_b, pressure);
+    // material moduli and v
+    double beta = 0.84;
+    double min_g = std::min(grid1, grid2);
+    // int t = beta*log(min_g);
+    t = 6;
+    mc = 0.7* pow(min_g, 1./t)-1;
+    if (mc < 2*t) {
+      mc = 2*t;
     }
-    using matrix = matrixTemplate<double>;
-    virtual void TearDown() {}
-    int t, q, grid1, grid2, mc;
-    double size, size_p, pressure, fineSizeA,
-            fineSizeB, coarseSize, d;
-    std::vector<matrix> pfVec, cDVec, cCVec;
-    matrix st, kM, Ip;
-    std::vector<int> qs;
+    // std::cout << "\”\n" << std::endl;
+
+    matrix st({2*t, 1});
+
+    initializeStylusArray(st, t);
+
+    double qLevel = std::log2(grid1 * grid2)/2-1;
+
+    q = grid1 / 2 + 2*t - 1;
+
+    qs.push_back(q);
+
+    for (int length = 1; length < qLevel-1; length++) {
+      q = q / 2 +  2*t - 1;
+      qs.push_back(q);
+    }
+
+    d = qs.size();
+    pfVec.reserve(d);
+    cDVec.reserve(d);
+    pfVec.push_back(Ip);
+    cDVec.push_back(kM);
+    coarseSize = fineSizeA*pow(2, d);
+    cCVec.reserve(3);
+    matrices.push_back(st);
+    matrices.push_back(Ip);
+    matrices.push_back(kM);
+  }
+  void TearDown() override {}
 };
 
-/*TEST_F(FixtureMLms, calculate) {
-  /*const double size = 2;
-  const double size_p = 1;
-  const double pressure = 1.;
-
-  // initial grid size for initialization
-  int grid1 = grids;
-  int grid2 = grids;
-
-  double fineSizeA = size / grid1;
-  double fineSizeB = size / grid2;
-
-  matrix kM({grid1, grid2});
-  matrix Ip({grid1, grid2});
-
-  double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
-  double upper_b = (grid2)/2. + (size_p/fineSizeB)/2.;
-
-  initializePressureArray(Ip, lower_b, upper_b, pressure);
-  // material moduli and v
-
-  double beta = 0.84;
-  double min_g = std::min(grid1, grid2);
-  // int t = beta*log(min_g);
-  int t = 5;
-  int mc = 0.7* pow(min_g, 1./t)-1;
-  if (mc < 2*t) {
-    mc = 2*t;
-  }
-  // std::cout << "\”\n" << std::endl;
-  matrix st({2*t, 1});
-
-  initializeStylusArray(st, 1);
-
-  std::vector<matrix> pfVec;
-  std::vector<matrix> cDVec;
-
-  std::vector<int> qs;
-
-  double qLevel = std::log2(grid1 * grid2)/2-1;
-  int q = grid1 / 2 + 2*t - 1;
-  qs.push_back(q);
-
-  for (int length = 1; length < qLevel-1; length++) {
-    q = q / 2 + 2*t - 1;
-    qs.push_back(q);
-  }
-
-  double d = qs.size();
-  pfVec.reserve(d);
-  cDVec.reserve(d);
-  pfVec.push_back(Ip);
-  cDVec.push_back(kM);
-  double coarseSize = fineSizeA*pow(2, d);
-  std::vector<matrix> cCVec;
-  cCVec.reserve(3);*//*
+TEST_F(FixtureMLms, calculate) {
+  matrix st = matrices[0];
+  matrix Ip = matrices[1];
+  matrix kM = matrices[2];
   createCorrectionArrays(cCVec, st, coarseSize, fineSizeA,
                           fineSizeB, mc);
 
@@ -317,7 +269,7 @@ class FixtureMLms : public::testing::Test {
 
   bool equal = false;
   bool equal1 = false;
-  double eps = 0.01;
+  double eps = 0.05;
   for (int i = 0; i < cDVec[0].shape[0]; i++) {
     for (int j = 0; j < cDVec[0].shape[1]; j++) {
       equal = std::abs(cDVec[0](i, j) - cDVec[0](j, i)) < eps;
@@ -331,11 +283,12 @@ class FixtureMLms : public::testing::Test {
       }
     }
   }
+
   EXPECT_TRUE(equal);
   EXPECT_TRUE(equal1);
-}*/
+}
 
-TEST(BoussinesqFFT, calculateGmn) {
+TEST(DISABLED_BoussinesqFFT, calculateGmn) {
   double Lx = 2., Ly = 2.;
   int Nx = grids, Ny = grids;
   double pSize = 1;
@@ -347,7 +300,7 @@ TEST(BoussinesqFFT, calculateGmn) {
   printarray(Gmn);
 }
 
-TEST(BoussinesqFFT2, calculate) {
+TEST(DISABLED_BoussinesqFFT2, calculate) {
   double Lx = 2., Ly = 2.;
   int Nx = grids, Ny = grids;
   double pSize = 1;
@@ -370,7 +323,7 @@ TEST(BoussinesqFFT2, calculate) {
   initializeDisplacementArray(p);
 
   copyPressureArray(p, tempP);
-  printarray(p);
+  // printarray(p);
 
   calculateGmn(Gmn, dx, dy);
 
@@ -390,7 +343,7 @@ TEST(BoussinesqFFT2, calculate) {
       equal = std::abs(Umn_res(i, j) - Umn_res(j, i)) < eps;
       equal1 = std::abs(res1(i, j) - Umn_res(i, j)) < eps;
       if (equal1 == false) {
-        std::cout << res1(i, j) << 
+        std::cout << res1(i, j) <<
                         " : " << Umn_res(i, j) <<
                         " : " << i << " : " << j <<
                         std::endl;

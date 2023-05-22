@@ -32,7 +32,7 @@ void runFastTimerLoops() {
 
     double beta = 0.84;
     double min_g = std::min(grid1, grid2);
-    //int t = beta*log(min_g);
+    // int t = beta*log(min_g);
     int t = 4;
     int mc = 0.7* pow(min_g, 1./t)-1;
     if (mc < 2*t) {

@@ -1,4 +1,4 @@
-CXX = g++ -g -std=c++17 -fno-omit-frame-pointer -fsanitize=address#-DNDEBUG #-mtune=native -march=native -fopenmp# 
+CXX = g++ -g -std=c++17 -fno-omit-frame-pointer #-fsanitize=address-DNDEBUG #-mtune=native -march=native -fopenmp# 
 # CXX = g++ -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))

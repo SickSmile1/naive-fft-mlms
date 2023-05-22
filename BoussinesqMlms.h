@@ -73,3 +73,4 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             int mc);
 
 #endif  // BOUSSINESQMLMS_H_
+

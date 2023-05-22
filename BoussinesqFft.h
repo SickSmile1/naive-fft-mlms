@@ -4,21 +4,21 @@
 
 #include "Boussinesq.h"
 
-void copyPressureArray(matrix& p, const matrix& tempP);
+void copyPressureArray(matrix& p, const matrix& tempP); // NOLINT
 
-void copyPressureArray(matrix& p, const matrix& tempP);
+void copyPressureArray(matrix& p, const matrix& tempP); // NOLINT
 
-void calculateGmn(matrix &Gmn, double dx, double dy);
+void calculateGmn(matrix &Gmn, double dx, double dy); // NOLINT
 
-void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild,
-                  matrix& p, cMatrix& p_tild);
+void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
+                  matrix& p, cMatrix& p_tild); // NOLINT
 
-void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild,
-                        cMatrix& p_tild);
+void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
+                        cMatrix& p_tild); // NOLINT
 
-void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny);
+void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny); // NOLINT
 
-void writeToResultArray(const matrix& Umn, matrix& Umn_res, 
-                        int Nx, int Ny);
+void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
+                        int Nx, int Ny); // NOLINT
 
 #endif  // BOUSSINESQFFT_H_
