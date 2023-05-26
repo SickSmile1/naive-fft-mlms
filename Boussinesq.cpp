@@ -59,12 +59,14 @@ double calcBoussinesq(int i, int j, double dxc, double dyc,
 void naiveCalculation(matrix &Ic, const matrix &Pa, // NOLINT
                 double cell_size) {
   // outer loop over grid to call displacement calculation
-  // for parallelisation uncomment, compiler option needed: -fopen
-  #pragma omp parallel for simd
-  for (int i = 0; i < Ic.shape[0]; i++) {
-    for (int j = 0; j < Ic.shape[1]; j++) {
+  int shape = Ic.shape[0]-1;
+  for (int i = 0; i < Ic.shape[0]/2; i++) {
+    for (int j = 0; j < Ic.shape[1]/2; j++) {
       Ic(i, j) = calc_displacement(Pa, Ic, i, j, cell_size/2,
                           cell_size/2, cell_size);
+      Ic(shape-i, shape-j) = Ic(i, j);
+      Ic(i, shape-j) = Ic(i, j);
+      Ic(shape-i, j) = Ic(i, j);
     }
   }
 }

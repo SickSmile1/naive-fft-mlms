@@ -15,12 +15,13 @@ void copyPressureArray(matrix& p, const matrix& tempP) {// NOLINT
 // __________________________________________________________________
 void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
   int shape = (Gmn.shape[0])/2;
+  std::cout << shape << std::endl;
   for (int i = 0; i <= shape; i++) {
     double res = calcBoussinesq(i, 0, dx, dy, dx, dy);
     Gmn(i, 0) = res;
     Gmn(0, i) = res;
-    Gmn((2*shape+1)-i, 0) = res;
-    Gmn(0, (2*shape+1)-i) = res;
+    if (i>0) {Gmn((2*shape+1-i), 0) = res;
+    Gmn(0, (2*shape+1)-i) = res;}
   }
   for (int i = 1; i <= shape; i++) {
     for (int j = 1; j <= shape; j++) {
@@ -37,12 +38,12 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
 void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
                   matrix& p, cMatrix& p_tild) { // NOLINT
   fftw_plan p1;
-  p1 = fftw_plan_dft_r2c_2d(Gmn.shape[0]-1, Gmn.shape[1]-1, Gmn.data.data(),
+  p1 = fftw_plan_dft_r2c_2d(Gmn.shape[0], Gmn.shape[1], Gmn.data.data(),
       reinterpret_cast<fftw_complex*>(Gmn_tild.data.data()), FFTW_ESTIMATE);
   // output array needs to be 2*nx / (ny*2/2)-1
 
   fftw_plan p2;
-  p2 = fftw_plan_dft_r2c_2d(p.shape[0]-1, p.shape[1]-1, p.data.data(),
+  p2 = fftw_plan_dft_r2c_2d(p.shape[0], p.shape[1], p.data.data(),
       reinterpret_cast<fftw_complex*>(p_tild.data.data()), FFTW_ESTIMATE);
 
   fftw_execute(p1);
@@ -55,7 +56,7 @@ void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
 // __________________________________________________________________
 void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
   fftw_plan p3;
-  p3 = fftw_plan_dft_c2r_2d(Umn.shape[0]-1, Umn.shape[1]-1,
+  p3 = fftw_plan_dft_c2r_2d(Umn.shape[0], Umn.shape[1],
                             reinterpret_cast<fftw_complex*>
                             (Umn_tild.data.data()),
                             Umn.data.data(), FFTW_ESTIMATE);
@@ -66,9 +67,9 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
 // __________________________________________________________________
 void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
                         int Nx, int Ny) { //NOLINT
-  int N = Nx*Ny;
+  int N = Umn.shape[0]*Umn.shape[1];
   #pragma omp parallel for simd
-  for (int i = 1; i < Umn_res.shape[0]; i++) {
+  for (int i = 0; i < Umn_res.shape[0]; i++) {
     for (int j = 0; j < Umn_res.shape[1]; j++) {
     Umn_res(i, j) = Umn(i, j)/N;
     }

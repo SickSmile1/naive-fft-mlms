@@ -15,7 +15,7 @@
   ASSERT_EQ(res, function call);
 }*/
 
-double grids = 32;
+int grids = 64;
 matrix res1({grids, grids});
 
 TEST(BoussinesqNaive, calculate) {
@@ -108,84 +108,32 @@ TEST(Boussinesq, boundaryCheck) {
 }
 
 TEST(BoussinesqMlms, initializeStylusArray) {
-  int tl = 2;
-  matrix st({2*tl, 1});
-  initializeStylusArray(st, tl);
-  // printarray(st);
+  matrix st = initializeStylusArray(1);
+  ASSERT_EQ(st(0, 0), (1./2.));
+  ASSERT_EQ(st(1, 0), (1./2.));
 
-  int t2 = 4;
-  matrix st1({2*t2, 1});
-  // std::cout << "\n\n" << std::endl;
+  matrix st1 = initializeStylusArray(2);
+  ASSERT_EQ(st1(0, 0), (-1./16.) );
+  ASSERT_EQ(st1(1, 0), (1./16.)*9);
+  ASSERT_EQ(st1(2, 0), (1./16.)*9);
+  ASSERT_EQ(st1(3, 0), (-1/16.) );
 
-  initializeStylusArray(st1, t2);
-  // printarray(st1);
-  // std::cout << "\n\n" << std::endl;
-  /*ASSERT_EQ(st1(0,0), (-1./16.) );
-  std::cout << st1.shape[0] << std::endl;
-  // ASSERT_EQ(st1(1,0), 0 );
-  ASSERT_EQ(st1(2,0), (1./16.)*9 );
-  ASSERT_EQ(st1(3,0), (1/16.)*16 );
-  ASSERT_EQ(st1(4,0), (1/16.)*16 );
-  ASSERT_EQ(st1(5,0), (1/16.)*9);
-  ASSERT_EQ(st1(6,0), 0);
-  ASSERT_EQ(st1(7,1), -(1/16.)*1);*/
-
-  tl = 6;
-  matrix st2({2*tl, 1});
-  initializeStylusArray(st2, tl);
-  // printarray(st2);
-  // std::cout << "\n\n" << std::endl;
-  /*ASSERT_EQ(st2(0,0), -(1/256)*3);
-  ASSERT_EQ(st2(1,0), 0 );
-  ASSERT_EQ(st2(2,0), -(1/256)*25);
-  ASSERT_EQ(st2(3,0), 0 );
-  ASSERT_EQ(st2(4,0), (1/256)*150);
-  ASSERT_EQ(st2(5,0), (1/256)*256);
-  ASSERT_EQ(st2(6,0), (1/256)*256);
-  ASSERT_EQ(st2(7,0), (1/256)*150);
-  ASSERT_EQ(st2(8,0), 0);
-  ASSERT_EQ(st2(9,0), -(1/256)*25);
-  ASSERT_EQ(st2(10,0), 0);
-  ASSERT_EQ(st2(11,0), (1/256)*3);*/
-
-
-  // printarray(st2);
+  matrix st2 = initializeStylusArray(3);
+  ASSERT_EQ(st2(0, 0), (1./256)*3);
+  ASSERT_EQ(st2(1, 0), -(1./256)*25);
+  ASSERT_EQ(st2(2, 0), (1./256)*150);
+  ASSERT_EQ(st2(3, 0), (1./256)*150);
+  ASSERT_EQ(st2(4, 0), -(1./256)*25);
+  ASSERT_EQ(st2(5, 0), (1./256)*3);
 }
-
-/*TEST(BoussinesqMlms, calcCoarsePressure) {
-  std::vector<int>& qs;
-  double qLevel = std::log2(grid * grid)/2-1;
-  int q = grid / 2 + 2*t - 1;
-  qs.push_back(q);
-
-  for (int length = 1; length < qLevel-1; length++) {
-    q = q / 2 + 2*t - 1;
-    qs.push_back(q);
-  }
-  std::vector<matrix>& pFVec;
-  std::vector<matrix>& cDVec;
-  int t = 2; 
-  const matrix& st(t,1);
-}*/
-
-/*TEST(BoussinesqMlms, correctionSteps) {}
-TEST(BoussinesqMlms, applyCorrection) {}
-TEST(BoussinesqMlms, correctionHelper) {}
-TEST(BoussinesqMlms, interpolateGrid) {}
-
-TEST(BoussinesqMlms, secondCorrectionStep) {}
-TEST(BoussinesqMlms, createCorrectionArrays) {}
-TEST(BoussinesqMlms, interpolateGrid) {}
-TEST(BoussinesqMlms, interpolateGrid) {}*/
 
 class FixtureMLms : public::testing::Test {
  protected:
   int t, q, grid1, grid2, mc;
-  double size, size_p, pressure, fineSizeA,
-            fineSizeB, coarseSize, d;
+  double size, size_p, pressure, fineSize,
+            coarseSize;
   std::vector<matrix> pfVec, cDVec, cCVec;
   std::vector<matrix> matrices;
-  std::vector<int> qs;
   void SetUp() override {
     size = 2;
     size_p = 1;
@@ -195,48 +143,24 @@ class FixtureMLms : public::testing::Test {
     grid1 = grids;
     grid2 = grids;
 
-    fineSizeA = size / grid1;
-    fineSizeB = size / grid2;
+    fineSize = size / grids;
 
-    matrix kM({grid1, grid2});
-    matrix Ip({grid1, grid2});
+    matrix kM({grids, grids});
+    matrix Ip({grids, grids});
 
-    double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
-    double upper_b = (grid2)/2. + (size_p/fineSizeB)/2.;
+    double lower_b = (grids)/2. - (size_p/fineSize)/2.;
+    double upper_b = (grids)/2. + (size_p/fineSize)/2.;
 
     initializePressureArray(Ip, lower_b, upper_b, pressure);
-    // material moduli and v
-    double beta = 0.84;
-    double min_g = std::min(grid1, grid2);
-    // int t = beta*log(min_g);
+
     t = 6;
-    mc = 0.7* pow(min_g, 1./t)-1;
-    if (mc < 2*t) {
-      mc = 2*t;
-    }
-    // std::cout << "\”\n" << std::endl;
+    mc = 2*t;
 
-    matrix st({2*t, 1});
+    matrix st = initializeStylusArray(t);
 
-    initializeStylusArray(st, t);
+    initializeStack(st, t, Ip, kM, grid1, pfVec, cDVec);
 
-    double qLevel = std::log2(grid1 * grid2)/2-1;
-
-    q = grid1 / 2 + 2*t - 1;
-
-    qs.push_back(q);
-
-    for (int length = 1; length < qLevel-1; length++) {
-      q = q / 2 +  2*t - 1;
-      qs.push_back(q);
-    }
-
-    d = qs.size();
-    pfVec.reserve(d);
-    cDVec.reserve(d);
-    pfVec.push_back(Ip);
-    cDVec.push_back(kM);
-    coarseSize = fineSizeA*pow(2, d);
+    coarseSize = fineSize*pow(2, pfVec.size()-1);
     cCVec.reserve(3);
     matrices.push_back(st);
     matrices.push_back(Ip);
@@ -249,21 +173,21 @@ TEST_F(FixtureMLms, calculate) {
   matrix st = matrices[0];
   matrix Ip = matrices[1];
   matrix kM = matrices[2];
-  createCorrectionArrays(cCVec, st, coarseSize, fineSizeA,
-                          fineSizeB, mc);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
 
-  calcCoarsePressure(qs, pfVec, cDVec, t, st);
+  calcCoarsePressure(pfVec, st);
 
-  calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
+  int d = pfVec.size()-1;
+  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
 
-  for (int i = 0; i < qs.size(); i++) {
-    double hS = fineSizeA*pow(2, d-i-1);
+  for (int i = 0; i < pfVec.size()-1; i++) {
+    double hS = fineSize*pow(2, d-i-1);
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
-    correctionSteps(cC, st, mc, t, fineSizeA, fineSizeB, hS);
+    correctionSteps(cC, st, mc, t, fineSize, hS);
     applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
     interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    secondCorrectionStep(mc, st, fineSizeA, fineSizeB, hS,
+    secondCorrectionStep(st, hS,
                           pfVec[d-i-1], cDVec[d-i-1], cCVec);
   }
 
@@ -288,19 +212,7 @@ TEST_F(FixtureMLms, calculate) {
   EXPECT_TRUE(equal1);
 }
 
-TEST(DISABLED_BoussinesqFFT, calculateGmn) {
-  double Lx = 2., Ly = 2.;
-  int Nx = grids, Ny = grids;
-  double pSize = 1;
-  double dx = (Lx/Nx);
-  double dy = (Ly/Ny);
-
-  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
-  calculateGmn(Gmn, dx, dy);
-  printarray(Gmn);
-}
-
-TEST(DISABLED_BoussinesqFFT2, calculate) {
+TEST(BoussinesqFFT2, calculate) {
   double Lx = 2., Ly = 2.;
   int Nx = grids, Ny = grids;
   double pSize = 1;
@@ -310,23 +222,19 @@ TEST(DISABLED_BoussinesqFFT2, calculate) {
   int lb = Nx/2-(pSize/dx)/2;
   int ub = Ny/2+(pSize/dy)/2;
 
+  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
+  cMatrix Gmn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix p({Gmn.shape[0], Gmn.shape[1]});
+  cMatrix p_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
   matrix tempP({Nx, Ny});
-  matrix p({2*Nx, 2*Ny});
-  cMatrix p_tild({2*Nx, (2*Ny)/2-1});
-  matrix Gmn({2*Nx, 2*Ny});
-  cMatrix Gmn_tild({2*Nx, (2*Ny)/2-1});
-  matrix Umn({Nx*2, Ny*2});
-  cMatrix Umn_tild({2*Nx, (2*Ny)/2-1});
+  matrix Umn({Gmn.shape[0], Gmn.shape[1]});
+  cMatrix Umn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
   matrix Umn_res({Nx, Ny});
 
   initializePressureArray(tempP, lb, ub, 1.);
   initializeDisplacementArray(p);
-
   copyPressureArray(p, tempP);
-  // printarray(p);
-
   calculateGmn(Gmn, dx, dy);
-
   transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
@@ -347,7 +255,6 @@ TEST(DISABLED_BoussinesqFFT2, calculate) {
                         " : " << Umn_res(i, j) <<
                         " : " << i << " : " << j <<
                         std::endl;
-        // break;
       }
     }
   }

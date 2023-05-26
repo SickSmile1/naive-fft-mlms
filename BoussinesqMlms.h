@@ -4,7 +4,12 @@
 
 #include "Boussinesq.h"
 
-void initializeStylusArray(matrix &st, int t); // NOLINT
+matrix initializeStylusArray(int t); // NOLINT
+
+void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
+                    const matrix kM, int grid, // NOLINT
+                    std::vector<matrix>& pfVec,
+                    std::vector<matrix>& cDVec);
 
 // most outer loop, for we need a n*n loop for the algorithm
 void naiveCalculation(matrix &Ic, const matrix &Pa, double cell_size); // NOLINT
@@ -25,16 +30,13 @@ double calc_displacement(const matrix &pressure,
 void calc_displacement(const matrix &pF, double cS, double fS,
                          matrix &cD);  // NOLINT
 
-void calcCoarsePressure(const std::vector<int>& qs, std::vector<matrix> &pFVec, // NOLINT
-                        std::vector<matrix> &cDVec, // NOLINT
-                        int t, const matrix& st);
+void calcCoarsePressure(std::vector<matrix> &pFVec, // NOLINT
+                        const matrix& st);
 
 // coarse pressure array calculation
 // void calc_coarse_pressure(const matrix &fP, const matrix &st,
 //                           matrix &cP, std::size_t t); // NOLINT
 
-// initialization with 1 for all elements
-void initializeMultiplicationArray(matrix &Ic); // NOLINT
 
 // calculate the sizes for the coarse grids
 void prepareCoarseSizes(std::vector<std::size_t> &gridLen1, // NOLINT
@@ -48,29 +50,27 @@ bool boundaryCheck(matrix &m, int i, int j); // NOLINT
 bool boundaryCheck(const matrix &m, int i, int j); // NOLINT
 
 void correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
-                    int t, double fineSizeA,
-                    double fineSizeB, double halfSize);
+                    int t, double fineSize, double halfSize);
 
 
 void applyCorrection(matrix &coarseDisplacement, const matrix cC, // NOLINT
                      const matrix Ip, int t);
 
-double correctionHelper(const matrix& cC, const matrix& Ip, int t,
+double correctionHelper(const matrix& cC, const matrix& Ip, int t, // NOLINT
                         int i, int j);
 
 void interpolateGrid(matrix &nextDisplacement, // NOLINT
                      const matrix coarseDisplacement, // NOLINT
                      const matrix st);
 
-void secondCorrectionStep(int mc, const matrix& st, double fineSizeA,
-                          double fineSizeB, double hS, const matrix&  // NOLINT
-                          pF, matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
+void secondCorrectionStep(const matrix& st, // NOLINT
+                          double hS, const matrix& pF, // NOLINT
+                          matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
 
 
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
-                            const matrix &st, double hS,
-                            double fineSizeA, double fineSizeB,
-                            int mc);
+                            const matrix &st, double hS, // NOLINT
+                            double fineSize);
 
 #endif  // BOUSSINESQMLMS_H_
 

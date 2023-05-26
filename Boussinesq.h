@@ -33,14 +33,14 @@ struct matrixTemplate{
   }
   // overload () for aquiring (conversion) i,j idexes in 1d array
   T& operator() (int i, int j) {
-    // assert(i < shape[0] && j < shape[1]);
+    assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 
   // overload () for aquiring (conversion) i,j indexes in 1d array
   // in static form
   const T& operator() (int i, int j) const {
-    // assert(i < shape[0] && j < shape[1]);
+    assert(i < shape[0] && j < shape[1]);
     return data[j+(i*shape[1])];
   }
 };
@@ -56,9 +56,9 @@ template <class T>
 void printarray(const matrixTemplate<T> &array) {
   for (int i = 0; i < array.shape[0]; i++) {
     for (int j = 0; j < array.shape[1]; j++) {
-      printf("%.4f\t", array(i, j));
+      std::cout << " " <<  array(i, j) << " ";
     }
-    printf("\n");
+    std::cout << "\n";
   }
   return;
 }
