@@ -178,6 +178,8 @@ TEST_F(FixtureMLms, calculate) {
   calcCoarsePressure(pfVec, st);
 
   int d = pfVec.size()-1;
+  
+  // naiveCalculation(cDVec[d], pfVec[d], fineSize/32);
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
 
   for (int i = 0; i < pfVec.size()-1; i++) {

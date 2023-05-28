@@ -50,8 +50,9 @@ void runFastTimerLoops() {
     MeasureTime mt = MeasureTime();
     calcCoarsePressure(pfVec, st);
 
-    calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
-
+    // calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
+    naiveCalculation(cDVec[d], pfVec[d], coarseSize);
+    
     for (int i = 0; i < qs.size(); i++) {
       double hS = fineSizeA*pow(2, d-i-1);
       int temp_mc = (mc*2)+1;
