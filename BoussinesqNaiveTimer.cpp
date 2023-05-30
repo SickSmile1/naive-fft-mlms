@@ -31,7 +31,8 @@ void runTimerLoops() {
     initializeDisplacementArray(Ic);
 
     MeasureTime mt = MeasureTime();
-    naiveCalculation(Ic, Pa, cell_size);
+    calc_displacement(Pa, cell_size, cell_size, Ic);
+    // naiveCalculation(Ic, Pa, cell_size, cell_size);
     auto stopped =  mt.stopTime();
 
     result(iteration, 0) = grid;

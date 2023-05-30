@@ -38,7 +38,7 @@ void runFastTimerLoops() {
 
     std::vector<int> qs;
 
-    initializeStack(st, t, Ip, kM, grid1, pfVec, cDVec);
+    initializeStack(st, t, Ip, kM, pfVec, cDVec);
 
     double d = qs.size();
 
@@ -50,8 +50,7 @@ void runFastTimerLoops() {
     MeasureTime mt = MeasureTime();
     calcCoarsePressure(pfVec, st);
 
-    // calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
-    naiveCalculation(cDVec[d], pfVec[d], coarseSize);
+    calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
     
     for (int i = 0; i < qs.size(); i++) {
       double hS = fineSizeA*pow(2, d-i-1);

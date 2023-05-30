@@ -7,7 +7,7 @@
 matrix initializeStylusArray(int t); // NOLINT
 
 void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
-                    const matrix kM, int grid, // NOLINT
+                    const matrix kM, // NOLINT
                     std::vector<matrix>& pfVec,
                     std::vector<matrix>& cDVec);
 
@@ -33,6 +33,8 @@ void calc_displacement(const matrix &pF, double cS, double fS,
 void calcCoarsePressure(std::vector<matrix> &pFVec, // NOLINT
                         const matrix& st);
 
+void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
+                        const matrix& st);
 // coarse pressure array calculation
 // void calc_coarse_pressure(const matrix &fP, const matrix &st,
 //                           matrix &cP, std::size_t t); // NOLINT

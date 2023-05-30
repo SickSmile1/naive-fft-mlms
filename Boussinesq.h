@@ -46,7 +46,6 @@ struct matrixTemplate{
 };
 
 using matrix = matrixTemplate<double>;
-using smatrix = matrixTemplate<std::string>;
 using cMatrix = matrixTemplate<std::complex<double>>;
 
 // printing function for the data container
@@ -91,7 +90,7 @@ double calcBoussinesq(int i, int j, double dxc, double dyc,
     double dxf, double dyf);
 
 void naiveCalculation(matrix &Ic, const matrix &Pa, // NOLINT
-                double cell_size);
+                double fS, double cS);
 
 double calc_displacement(const matrix &pressure,
               const matrix &Ic,

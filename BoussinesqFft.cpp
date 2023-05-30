@@ -15,7 +15,6 @@ void copyPressureArray(matrix& p, const matrix& tempP) {// NOLINT
 // __________________________________________________________________
 void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
   int shape = (Gmn.shape[0])/2;
-  std::cout << shape << std::endl;
   for (int i = 0; i <= shape; i++) {
     double res = calcBoussinesq(i, 0, dx, dy, dx, dy);
     Gmn(i, 0) = res;

@@ -15,7 +15,7 @@
   ASSERT_EQ(res, function call);
 }*/
 
-int grids = 64;
+int grids = 128;
 matrix res1({grids, grids});
 
 TEST(BoussinesqNaive, calculate) {
@@ -34,7 +34,8 @@ TEST(BoussinesqNaive, calculate) {
 
   initializePressureArray(Pa, lower_b, upper_b, pressure);
   initializeDisplacementArray(Ic);
-  naiveCalculation(Ic, Pa, cell_size);
+  // naiveCalculation(Ic, Pa, cell_size/2, cell_size);
+  calc_displacement(Pa, cell_size, cell_size, Ic);
 
   bool equal = false;
   double eps = 0.001;
@@ -134,6 +135,7 @@ class FixtureMLms : public::testing::Test {
             coarseSize;
   std::vector<matrix> pfVec, cDVec, cCVec;
   std::vector<matrix> matrices;
+  std::vector<matrix> pfVec1;
   void SetUp() override {
     size = 2;
     size_p = 1;
@@ -158,8 +160,9 @@ class FixtureMLms : public::testing::Test {
 
     matrix st = initializeStylusArray(t);
 
-    initializeStack(st, t, Ip, kM, grid1, pfVec, cDVec);
+    initializeStack(st, t, Ip, kM, pfVec, cDVec);
 
+    pfVec1 = pfVec;
     coarseSize = fineSize*pow(2, pfVec.size()-1);
     cCVec.reserve(3);
     matrices.push_back(st);
@@ -169,7 +172,34 @@ class FixtureMLms : public::testing::Test {
   void TearDown() override {}
 };
 
+TEST_F(FixtureMLms, calcCoarsePressure){
+  
+  matrix st = matrices[0];
+  matrix Ip = matrices[1];
+  matrix kM = matrices[2];
+  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
+
+  calcCoarsePressure(pfVec1, st);
+  matrix firstPressure = pfVec1[pfVec.size()];
+
+  old_calcCoarsePressure(pfVec, st);
+  // printarray(pfVec[pfVec.size()-1]);
+  bool equal = false;
+  double eps = 0.00001;
+  for (int i = 0; i < firstPressure.shape[0]; i++) {
+    for (int j = 0; j < firstPressure.shape[1]; j++) {
+      equal = std::abs(firstPressure(i, j) - pfVec[pfVec.size()](i, j)) < eps;
+      if (equal == false) {
+        std::cout << firstPressure(i, j) << " : " << pfVec[pfVec.size()](i, j) << 
+          " , " << i << " : " << j <<std::endl;
+        break;
+      }
+    }
+  }
+}
+
 TEST_F(FixtureMLms, calculate) {
+  // GTEST_SKIP();
   matrix st = matrices[0];
   matrix Ip = matrices[1];
   matrix kM = matrices[2];
@@ -179,9 +209,9 @@ TEST_F(FixtureMLms, calculate) {
 
   int d = pfVec.size()-1;
   
-  // naiveCalculation(cDVec[d], pfVec[d], fineSize/32);
+  // naiveCalculation(cDVec[d], pfVec[d], fineSize/2., coarseSize);
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-
+  // return;
   for (int i = 0; i < pfVec.size()-1; i++) {
     double hS = fineSize*pow(2, d-i-1);
     int temp_mc = (mc*2)+1;

@@ -20,10 +20,10 @@ matrix initializeStylusArray(int t) { // NOLINT
 
 // __________________________________________________________________
 void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
-                    const matrix kM, const int grid, // NOLINT
+                    const matrix kM, // NOLINT
                     std::vector<matrix>& pfVec, // NOLINT
                     std::vector<matrix>& cDVec) { // NOLINT
-                    // std::vector<int> &qs) { // NOLINT
+  const int grid = kM.shape[0];
   pfVec.push_back(Ip);
   cDVec.push_back(kM);
   double qLevel = std::log2(grid * grid)/2-1;
@@ -43,6 +43,67 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
 
 // __________________________________________________________________
 void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
+                        const matrix& st) {
+  int t = st.shape[0]/2;
+  for (int level = 0; level <= pFVec.size()-2; level++) {
+    matrix &pC = pFVec[level+1];
+    for (int m = 0; m < pC.shape[0]; m++) {
+      for (int n = 0; n < pC.shape[1]; n++) {
+        // establish bigger boundaries to interpolate pressure on the
+        // edges of the grid
+        int i = 2*(m-t+1);
+        int j = 2*(n-t+1);
+        // determine loop boundaries to avoid boundary checks
+        int lb_i = 1, lb_j =1;
+        int ub_i = 2*t, ub_j = 2*t;
+        if (i < 2*t) {
+          lb_i = t*2-m;
+        }
+        if (i > (pFVec[level].shape[0]-2*t)) {
+          ub_i = (pC.shape[0]-m);
+        }
+        if (j < 2*t) {
+          lb_j = t*2-m;
+        }
+        if (j > (pFVec[level].shape[0]-2*t)) {
+          ub_j = (pC.shape[0]-n);
+        }
+        // interpolate pressure for m, n from i, j of coarse pressure
+        // array
+        pC(m, n) = 0;
+        double res = 0;
+        if (!boundaryCheck(pFVec[level], i, j)) {
+          res += 0;
+        } else {
+          res += pFVec[level](i, j);
+        }
+        if ((j > 0)&(j < pFVec[level].shape[0])) {
+          for (int k = lb_i; k <= ub_i; k++) {
+            int pi = i+2*(k-t)-1;
+            res += st(k-1, 0)*pFVec[level](pi, j);
+          }
+        }
+        if ((i > 0) & (i < pFVec[level].shape[1])) {
+          for (int k = lb_j; k <= ub_j; k++) {
+            int pj = j+2*(k-t)-1;
+            res += st(k-1, 0)*pFVec[level](i, pj);
+          }
+        }
+        for (int k = lb_i; k <= ub_i; k++) {
+          for (int l = lb_j; l <= ub_j; l++) {
+            int pi = i+2*(k-t)-1;
+            int pj = j+2*(l-t)-1;
+            res += st(k-1, 0)*st(l-1,0)*pFVec[level](pi, pj);
+          }
+        }
+        pC(m, n) = res; // i+2*(1-t)-1;
+      }
+    }
+  }
+}
+
+// __________________________________________________________________
+void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
                         const matrix& st) {
   int t = st.shape[0]/2;
   for (int level = 0; level <= pFVec.size()-2; level++) {
