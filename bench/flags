@@ -1,10 +1,8 @@
 -O3
--std=c++14
+-std=c++17
 -Wall
 -fno-rtti
 -fno-exceptions
 -pedantic
 -pthreads
--fomit-frame-pointer
--mtune=native
--march=native 
+-fno-omit-frame-pointer

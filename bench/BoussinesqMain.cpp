@@ -1,6 +1,6 @@
-#include "Boussinesq.hh"
-#include "BoussinesqMatrix.hh"
-#include "BoussinesqMlms.hh"
+#include "Boussinesq1.hh"
+#include "BoussinesqMatrix1.hh"
+#include "BoussinesqMlms1.hh"
 
 #include <iostream>
 #include <iomanip>

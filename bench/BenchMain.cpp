@@ -1,14 +1,16 @@
 #include <benchmark/benchmark.h>
-#include "Mlms.h"
+#include "Boussinesq.h"
+#include "BoussinesqMlms.h"
 #include <iostream>
 #include <cmath>
+#include <fftw3.h>
 
-#include "Boussinesq.hh"
-#include "BoussinesqMatrix.hh"
-#include "BoussinesqMlms.hh"
+//#include "Boussinesq1.hh"
+//#include "BoussinesqMatrix1.hh"
+//#include "BoussinesqMlms1.hh"
 
-#include <iostream>
-#include <iomanip>
+//#include <iostream>
+//#include <iomanip>
 
 /*static void bench_alloc_and_null (benchmark::State &state) {
   std::size_t grid = 100;
@@ -89,77 +91,50 @@ BENCHMARK(bench_calculation_loop)->Iterations(100);
 BENCHMARK(bench_calculation_loop)->Iterations(100);
 */
 
-const double size = 2;
-const double size_p = 1;
-const double pressure = 1.;
-
-// initial grid size for initialization
-int grid1 = 256;
-
-double fineSizeA = size / grid1;
-
-matrix_i kM({grid1, grid1});
-matrix_i Ip({grid1, grid1});
-
-double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
-double upper_b = (grid1)/2. + (size_p/fineSizeA)/2.;
-// int t = beta*log(min_g);
-int t = 5;
-double min_g = std::min(grid1, grid1);
-matrix_i st({2*t, 1});
-int mc = 0.7* pow(min_g, 1./t)-1;
-
-std::vector<matrix_i> pfVec;
-std::vector<matrix_i> cDVec;
-std::vector<matrix_i> cCVec;
-
-std::vector<int> qs;
-double coarseSize;
-double d;
-double hS;
-int temp_mc;
-matrix_i cC({1,1});
-
-static void bench_Mlms(benchmark::State &state) {
+void MlmsLoop(size_t grid) {
+  double size = 2;
+  double size_p = 1;
+  double pressure = 1.;
+  int grids = grid;
+  double fineSize = size / grids;
+  matrix kM({grids, grids});
+  matrix Ip({grids, grids});
+  double lower_b = (grids)/2. - (size_p/fineSize)/2.;
+  double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
-  double qLevel = std::log2(grid1 * grid1)/2-1;
-  int q = grid1 / 2 + 2*t - 1;
-  qs.push_back(q);
-
-  for (int length = 1; length < qLevel-1; length++) {
-    q = q / 2 + 2*t - 1;
-    qs.push_back(q);
-  }
-
-  d = qs.size();
-  pfVec.reserve(d);
-  cDVec.reserve(d);
-  pfVec.push_back(Ip);
-  cDVec.push_back(kM);
-  coarseSize = fineSizeA*pow(2, d);
+  int t = 6;
+  int mc = 2*t;
+  std::vector<matrix> pfVec, cDVec, cCVec;
+  matrix st = initializeStylusArray(t);
+  initializeStack(st, t, Ip, kM, pfVec, cDVec);
+  double coarseSize = fineSize*pow(2, pfVec.size()-1);
   cCVec.reserve(3);
-
-  for (auto _ : state) {
-  createCorrectionArrays(cCVec, st, coarseSize, fineSizeA,
-                         fineSizeA, mc);
-  }
-  calcCoarsePressure(qs, pfVec, cDVec, t, st);
-
-  calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
-
-  for (int i = 0; i < qs.size()-1; i++) {
-    hS = fineSizeA*pow(2, d-i-1);
-    temp_mc = (mc*2)+1;
-    matrix_i cC({temp_mc, temp_mc});
-    correctionSteps(cC, st, mc, t, fineSizeA, fineSizeA, hS);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
+  calcCoarsePressure(pfVec, st);
+  int d = pfVec.size()-1;
+  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
+  for (int i = 0; i < pfVec.size()-1; i++) {
+    double hS = fineSize*pow(2, d-i-1);
+    int temp_mc = (mc*2)+1;
+    matrix cC({temp_mc, temp_mc});
+    correctionSteps(cC, st, mc, t, fineSize, hS);
     applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
     interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    secondCorrectionStep(mc, st, fineSizeA, fineSizeA, hS,
-                       pfVec[d-i-1], cDVec[d-i-1], cCVec);
+    secondCorrectionStep(st, hS,
+                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
   }
 }
 
-static void bench_Mlms_displacement(benchmark::State &state) {
+static void Mlms(benchmark::State &state) {
+  for (auto _ : state) {
+      MlmsLoop(state.range(0));
+  }
+
+}
+
+BENCHMARK(Mlms)->Range(8, 8<<10);
+
+/*static void bench_Mlms_displacement(benchmark::State &state) {
   for (auto _:state) {
     calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
   }
@@ -194,16 +169,15 @@ static void bench_Mlms_2ndCor(benchmark::State &state) {
     secondCorrectionStep(mc, st, fineSizeA, fineSizeA, hS,
                        pfVec[0], cDVec[0], cCVec);
   }
-}
+}*/
 
 // my implementation
-BENCHMARK(bench_Mlms);
-BENCHMARK(bench_Mlms_displacement)->Iterations(25);
+/*BENCHMARK(bench_Mlms_displacement)->Iterations(25);
 BENCHMARK(bench_Mlms_corrArr);
 BENCHMARK(bench_Mlms_corrStep);
 BENCHMARK(bench_Mlms_corrStep1);
 BENCHMARK(bench_Mlms_interpolate);
-BENCHMARK(bench_Mlms_2ndCor);
+BENCHMARK(bench_Mlms_2ndCor);*/
 
 // Lukas implementation
 /*
@@ -224,6 +198,8 @@ std::vector<matrix1> corrections;
 
 std::vector<std::vector<matrix1>> fcorrections;
 */
+
+/*
 static void bench_Mlms_lukas(benchmark::State &state) {
   double Lx = 2, Ly = 2;
   std::size_t Nx = 256, Ny = 256;
@@ -257,7 +233,9 @@ static void bench_Mlms_lukas(benchmark::State &state) {
   // auto fcorrections = fine_corrections(displacement_stack, mc);
 
   // refine(pressure_stack, displacement_stack, corrections, fcorrections);
-}
+}*/
+
+
 /*
 static void bench_Mlms_displacement_l(benchmark::State &state) {
   for (auto _: state) {
@@ -289,6 +267,6 @@ BENCHMARK(bench_Mlms_coarseCorr_l);
 BENCHMARK(bench_Mlms_fineCor_l);
 BENCHMARK(bench_Mlms_refine_l);*/
 
-BENCHMARK(bench_Mlms_lukas);
+// BENCHMARK(bench_Mlms_lukas);
 
 BENCHMARK_MAIN();
