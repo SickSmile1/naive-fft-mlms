@@ -37,7 +37,6 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
     matrix temp({q, q});
     pfVec.push_back(temp);
     cDVec.push_back(temp);
-    // qs.push_back(q);
   }
 }
 
@@ -430,3 +429,54 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
   cCVec.push_back(cC3);
   cCVec.push_back(cC4);
 }
+
+// __________________________________________________________________
+matrix BoussinesqMlms(double size, int grid1, int t) {
+  // const double size = 2;
+  // const double size_p = 1;
+  const double pressure = 1.;
+
+  double size_p = size/2;
+
+  double fineSizeA = size / grid1;
+
+  matrix kM({grid1, grid1});
+  matrix Ip({grid1, grid1});
+
+  double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
+  double upper_b = (grid1)/2. + (size_p/fineSizeA)/2.;
+
+  initializePressureArray(Ip, lower_b, upper_b, pressure);
+
+  // int t = 4;
+  int mc = 2*t;
+  
+  matrix st = initializeStylusArray(t);
+
+  std::vector<matrix> pfVec;
+  std::vector<matrix> cDVec;
+
+  initializeStack(st, t, Ip, kM, pfVec, cDVec);
+  double d = pfVec.size()-1;
+
+  double coarseSize = fineSizeA*pow(2, d);
+  std::vector<matrix> cCVec;
+  cCVec.reserve(3);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSizeA);
+
+  calcCoarsePressure(pfVec, st);
+  calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
+  for (int i = 0; i < pfVec.size()-1; i++) {
+    double hS = fineSizeA*pow(2, d-i-1);
+    int temp_mc = (mc*2)+1;
+    matrix cC({temp_mc, temp_mc});
+    correctionSteps(cC, st, mc, t, fineSizeA, hS);
+    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
+    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
+    secondCorrectionStep(st, hS,
+                         pfVec[d-i-1], cDVec[d-i-1], cCVec);
+  }
+  return cDVec[0];
+}
+
+

@@ -85,3 +85,42 @@ void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
     }
   }
 }
+
+
+// __________________________________________________________________
+matrix BoussinesqFFT(double size, int grid) {
+  double Lx = size, Ly = size;
+  int Nx = grid, Ny = grid;
+  double pSize = size/2.;
+  double dx = (Lx/Nx);
+  double dy = (Ly/Ny);
+
+  int lb = Nx/2-(pSize/dx)/2;
+  int ub = Ny/2+(pSize/dy)/2;
+
+  matrix tempP({Nx, Ny});
+  matrix p({2*Nx, 2*Ny});
+  cMatrix p_tild({2*Nx, (2*Ny)/2-1});
+  matrix Gmn({2*Nx, 2*Ny});
+  cMatrix Gmn_tild({2*Nx, (2*Ny)/2-1});
+  matrix Umn({Nx*2, Ny*2});
+  cMatrix Umn_tild({2*Nx, (2*Ny)/2-1});
+  matrix Umn_res({Nx, Ny});
+
+  initializePressureArray(tempP, lb, ub, 1.);
+  initializeDisplacementArray(p);
+
+  copyPressureArray(p, tempP);
+
+  calculateGmn(Gmn, dx/2, dy/2);
+
+  transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
+
+  multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
+
+  transformToReal(Umn_tild, Umn, Nx, Ny);
+
+  writeToResultArray(Umn, Umn_res, Nx, Ny);
+  
+  return Umn_res;
+}

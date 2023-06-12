@@ -54,6 +54,9 @@ bool boundaryCheck(const matrix &m, int i, int j); // NOLINT
 void correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
                     int t, double fineSize, double halfSize);
 
+void old_correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
+                    int t, double fineSize, double halfSize);
+
 
 void applyCorrection(matrix &coarseDisplacement, const matrix cC, // NOLINT
                      const matrix Ip, int t);
@@ -65,10 +68,18 @@ void interpolateGrid(matrix &nextDisplacement, // NOLINT
                      const matrix coarseDisplacement, // NOLINT
                      const matrix st);
 
+void old_interpolateGrid(matrix &nextDisplacement, // NOLINT
+                     const matrix coarseDisplacement, // NOLINT
+                     const matrix st);
+
 void secondCorrectionStep(const matrix& st, // NOLINT
                           double hS, const matrix& pF, // NOLINT
                           matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
 
+
+void old_secondCorrectionStep(const matrix& st, // NOLINT
+                          double hS, const matrix& pF, // NOLINT
+                          matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
 
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT

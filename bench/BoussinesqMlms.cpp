@@ -152,32 +152,38 @@ bool boundaryCheck(matrix &m, int i, int j) { // NOLINT
 }
 
 // __________________________________________________________________
-void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
+void old_correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     double fineSize, double halfSize) {
   int ts = t;
-  /*for (int i = -mc; i <= mc; i++) {
+  for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
       cC(i+mc, j+mc) = 0;
       bool iEven = (i%2) == 0;
       bool jEven = (j%2) == 0;
       double res1 = 0, res2 = 0, res3 = 0;
-      double K = calcBoussinesq(i, j, halfSize, halfSize, fineSizeA, fineSizeB);
+      double K = calcBoussinesq(i, j, halfSize, halfSize, fineSize, fineSize);
       for (int k = 1; k <= 2*t; k++) {
         res1 += st(k-1, 0) * calcBoussinesq(i-2*(k-ts)+1, j, 
-                    halfSize, halfSize, fineSizeA, fineSizeB);
+                    halfSize, halfSize, fineSize, fineSize);
         res2 += st(k-1, 0) * calcBoussinesq(i, j-2*(k-ts)+1,
-                    halfSize, halfSize, fineSizeA, fineSizeB);
+                    halfSize, halfSize, fineSize, fineSize);
         for (int l = 1; l <= 2*t; l++) {
           res3 += st(k-1, 0)*st(l-1, 0) * 
             calcBoussinesq(i-2*(k-ts)+1, j-2*(l-ts)+1, halfSize,
-            halfSize, fineSizeA, fineSizeB);
+            halfSize, fineSize, fineSize);
         }
       }
       cC(i+mc, j+mc) += ((!iEven)&jEven)*(K-res1);
       cC(i+mc, j+mc) += (iEven&(!jEven))*(K-res2);
       cC(i+mc, j+mc) += ((!iEven)&(!jEven))*(K-res3);
     }
-  }*/
+  }
+}
+
+// __________________________________________________________________
+void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
+    double fineSize, double halfSize) {
+  int ts = t;
   for (int i = -mc; i < mc; i+=2) {
     for (int j = -mc; j < mc; j+=2) {
       cC(i+mc, j+mc) = 0;
@@ -294,7 +300,12 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
       }
     }
   }
-  /*
+}
+
+// __________________________________________________________________
+void old_interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
+  int mc = st.shape[0];
+  int t = mc/2;
   for (int i = 0; i < fD.shape[0]; i++) {
     for (int j = 0; j < fD.shape[1]; j++) {
       bool iEven = (i%2) == 0;
@@ -321,7 +332,7 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
         fD(i, j) += (iEven&jEven)*cD((i+1)/2+t-1, (j+1)/2+t-1);
       }
     }
-  }*/
+  }
 }
 
 // __________________________________________________________________
@@ -373,7 +384,15 @@ void secondCorrectionStep(const matrix& st,
       }
     }
   }
-  /*int shape = cD.shape[0];
+}
+
+// __________________________________________________________________
+void old_secondCorrectionStep(const matrix& st,
+                          double hS, const matrix& pF, matrix& cD, // NOLINT
+                          const std::vector<matrix> &cCVec) {
+  int mc = st.shape[0];
+  int t = mc/2;
+  int shape = cD.shape[0];
   for (int i = 0; i < shape; i++) {
     for (int j = 0; j < shape; j++) {
       double correction = 0;
@@ -393,7 +412,7 @@ void secondCorrectionStep(const matrix& st,
       }
       cD(i, j) += correction;
     }
-  }*/
+  }
 }
 
 

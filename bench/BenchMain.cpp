@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include "Boussinesq.h"
+#include "BoussinesqFft.h"
 #include "BoussinesqMlms.h"
 #include <iostream>
 #include <cmath>
@@ -90,8 +91,7 @@ BENCHMARK(bench_calculation_loop)->Iterations(100);
 BENCHMARK(bench_calculation_loop)->Iterations(100);
 BENCHMARK(bench_calculation_loop)->Iterations(100);
 */
-
-void MlmsLoop(size_t grid) {
+void MlmsLoop2(size_t grid) {
   double size = 2;
   double size_p = 1;
   double pressure = 1.;
@@ -103,6 +103,49 @@ void MlmsLoop(size_t grid) {
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
   int t = 6;
+  int mc = 2*t;
+  std::vector<matrix> pfVec, cDVec, cCVec;
+  matrix st = initializeStylusArray(t);
+  initializeStack(st, t, Ip, kM, pfVec, cDVec);
+  double coarseSize = fineSize*pow(2, pfVec.size()-1);
+  cCVec.reserve(3);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
+  old_calcCoarsePressure(pfVec, st);
+  int d = pfVec.size()-1;
+  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
+  for (int i = 0; i < pfVec.size()-1; i++) {
+    double hS = fineSize*pow(2, d-i-1);
+    int temp_mc = (mc*2)+1;
+    matrix cC({temp_mc, temp_mc});
+    old_correctionSteps(cC, st, mc, t, fineSize, hS);
+    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
+    old_interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
+    old_secondCorrectionStep(st, hS,
+                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
+  }
+}
+
+static void Mlms2(benchmark::State &state) {
+  for (auto _ : state) {
+      MlmsLoop2(state.range(0));
+  }
+  state.SetComplexityN(state.range(0));
+}
+
+BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
+
+void MlmsLoop1(size_t grid) {
+  double size = 2;
+  double size_p = 1;
+  double pressure = 1.;
+  int grids = grid;
+  double fineSize = size / grids;
+  matrix kM({grids, grids});
+  matrix Ip({grids, grids});
+  double lower_b = (grids)/2. - (size_p/fineSize)/2.;
+  double upper_b = (grids)/2. + (size_p/fineSize)/2.;
+  initializePressureArray(Ip, lower_b, upper_b, pressure);
+  int t = 8;
   int mc = 2*t;
   std::vector<matrix> pfVec, cDVec, cCVec;
   matrix st = initializeStylusArray(t);
@@ -125,148 +168,54 @@ void MlmsLoop(size_t grid) {
   }
 }
 
-static void Mlms(benchmark::State &state) {
+static void Mlms1(benchmark::State &state) {
   for (auto _ : state) {
-      MlmsLoop(state.range(0));
+      MlmsLoop1(state.range(0));
   }
-
+  state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(Mlms)->Range(8, 8<<10);
+BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
 
-/*static void bench_Mlms_displacement(benchmark::State &state) {
-  for (auto _:state) {
-    calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
-  }
+void FftLoop(size_t grids) {
+  double Lx = 2., Ly = 2.;
+  int Nx = grids, Ny = grids;
+  double pSize = 1;
+  double dx = (Lx/Nx);
+  double dy = (Ly/Ny);
+
+  int lb = Nx/2-(pSize/dx)/2;
+  int ub = Ny/2+(pSize/dy)/2;
+
+  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
+  cMatrix Gmn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix p({Gmn.shape[0], Gmn.shape[1]});
+  cMatrix p_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix tempP({Nx, Ny});
+  matrix Umn({Gmn.shape[0], Gmn.shape[1]});
+  cMatrix Umn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix Umn_res({Nx, Ny});
+
+  initializePressureArray(tempP, lb, ub, 1.);
+  initializeDisplacementArray(p);
+  copyPressureArray(p, tempP);
+  calculateGmn(Gmn, dx, dy);
+  transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
+
+  multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
+
+  transformToReal(Umn_tild, Umn, Nx, Ny);
+
+  writeToResultArray(Umn, Umn_res, Nx, Ny);
 }
 
-static void bench_Mlms_corrArr(benchmark::State &state) {
-  for (auto _:state) {
-    createCorrectionArrays(cCVec, st, coarseSize, fineSizeA,
-                         fineSizeA, mc);
+static void FFT(benchmark::State &state) {
+  for (auto _ : state) {
+      FftLoop(state.range(0));
   }
+  state.SetComplexityN(state.range(0));
 }
 
-static void bench_Mlms_corrStep(benchmark::State &state) {
-  for (auto _:state) {
-    correctionSteps(cC, st, mc, t, fineSizeA, fineSizeA, hS);
-  }
-}
-
-static void bench_Mlms_corrStep1(benchmark::State &state) {
-  for (auto _:state) {
-    applyCorrection(cDVec[0], cC, pfVec[1], t);
-  }
-}
-
-static void bench_Mlms_interpolate(benchmark::State &state) {
-  for (auto _:state) {
-    interpolateGrid(cDVec[1], cDVec[0], st);
-  }
-}
-static void bench_Mlms_2ndCor(benchmark::State &state) {
-  for (auto _:state) {
-    secondCorrectionStep(mc, st, fineSizeA, fineSizeA, hS,
-                       pfVec[0], cDVec[0], cCVec);
-  }
-}*/
-
-// my implementation
-/*BENCHMARK(bench_Mlms_displacement)->Iterations(25);
-BENCHMARK(bench_Mlms_corrArr);
-BENCHMARK(bench_Mlms_corrStep);
-BENCHMARK(bench_Mlms_corrStep1);
-BENCHMARK(bench_Mlms_interpolate);
-BENCHMARK(bench_Mlms_2ndCor);*/
-
-// Lukas implementation
-/*
-double Lx, Ly;
-std::size_t Nx, Ny;
-
-vec2d pixel;
-
-matrix1 pressures({1, 1}), displacement({1, 1});
-int t_l, levels;
-
-grid_stack pressure_stack(pressures, {2 / 64, 2 / 64}, 4, 5),
-  displacement_stack(displacement, {2 / 64, 2 / 64}, 4, 5);
-
-std::vector<grid_stack> stack;
-
-std::vector<matrix1> corrections;
-
-std::vector<std::vector<matrix1>> fcorrections;
-*/
-
-/*
-static void bench_Mlms_lukas(benchmark::State &state) {
-  double Lx = 2, Ly = 2;
-  std::size_t Nx = 256, Ny = 256;
-  vec2d pixel = {Lx / Nx, Ly / Ny};
-  matrix pressures({Nx, Ny}), displacement({Nx, Ny});
-  // initialize pressure
-  for (std::size_t i = 0; i < pressures.shape[0]; ++i) {
-    for (std::size_t j = 0; j < pressures.shape[1]; ++j) {
-      if (i >= Nx/4 and i < 3 * Nx / 4 and j >= Nx/4 and j < 3 * Ny / 4) {
-        pressures(i, j) = 1.;
-      } else {
-        pressures(i, j) = 0.;
-      }
-    }
-  }
-  int t_l = 5, levels = optimal_levels(pressures.shape);
-  
-  grid_stack pressure_stack(pressures, pixel, t_l, levels),
-    displacement_stack(displacement, pixel, t_l, levels);
-
-  auto mc = correction_size(t, pressures.shape);
-  pressure_stack.coarsen();
-  
-  for (auto _: state) {
-    compute_coarse_displacements(pressure_stack, displacement_stack);
-  }
-
-  // stack.push_back(pressure_stack);
-  // stack.push_back(displacement_stack);
-  // auto corrections = coarse_corrections(pressure_stack, mc);
-  // auto fcorrections = fine_corrections(displacement_stack, mc);
-
-  // refine(pressure_stack, displacement_stack, corrections, fcorrections);
-}*/
-
-
-/*
-static void bench_Mlms_displacement_l(benchmark::State &state) {
-  for (auto _: state) {
-    compute_coarse_displacements(stack[0], stack[1]);
-  }
-}
-
-static void bench_Mlms_coarseCorr_l(benchmark::State &state) {
-  for (auto _: state) {
-    corrections = coarse_corrections(stack[0], mc);
-  }
-}
-
-static void bench_Mlms_fineCor_l(benchmark::State &state) {
-  for (auto _: state) {
-   fcorrections = fine_corrections(stack[0], mc);
-  }
-}
-
-static void bench_Mlms_refine_l(benchmark::State &state) {
-  for (auto _: state) {
-    refine(stack[0], stack[1], corrections, fcorrections);
-  }
-}
-
-BENCHMARK(bench_Mlms_lukas);
-BENCHMARK(bench_Mlms_displacement_l);
-BENCHMARK(bench_Mlms_coarseCorr_l);
-BENCHMARK(bench_Mlms_fineCor_l);
-BENCHMARK(bench_Mlms_refine_l);*/
-
-// BENCHMARK(bench_Mlms_lukas);
+BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
 
 BENCHMARK_MAIN();

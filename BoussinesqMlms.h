@@ -15,9 +15,9 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
 void naiveCalculation(matrix &Ic, const matrix &Pa, double cell_size); // NOLINT
 
 // inner loop calling the calulation for every n
-inline double calcBoussinesq(double a, double b, double x, double y);
+double calcBoussinesq(double a, double b, double x, double y);
 
-inline double calcBoussinesq(int i, int j, double dxc, double dyc,
+double calcBoussinesq(int i, int j, double dxc, double dyc,
     double dxf, double dyf);
 
 // actual calculation
@@ -73,6 +73,8 @@ void secondCorrectionStep(const matrix& st, // NOLINT
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
                             double fineSize);
+
+matrix BoussinesqMlms(double size, int grid1, int t);
 
 #endif  // BOUSSINESQMLMS_H_
 
