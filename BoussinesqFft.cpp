@@ -20,13 +20,13 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
     Gmn(i, 0) = res;
     Gmn(0, i) = res;
     if (i>0) {Gmn((2*shape+1-i), 0) = res;
-    Gmn(0, (2*shape+1)-i) = res;}
+    Gmn(0, (2*shape+1)-i) =  res;}
   }
   for (int i = 1; i <= shape; i++) {
     for (int j = 1; j <= shape; j++) {
       double res = calcBoussinesq(i, j, dx, dy, dx, dy);
-      Gmn(i, (2*shape+1)-j) = res;
-      Gmn(i, j) = res;
+      Gmn(i, (2*shape+1)-j) =  res;
+      Gmn(i, j) =  res;
       Gmn((2*shape+1)-i, j) = res;
       Gmn((2*shape+1)-i, (2*shape+1)-j) = res;
     }
@@ -66,14 +66,13 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
 // __________________________________________________________________
 void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
                         int Nx, int Ny) { //NOLINT
-  int N = Umn.shape[0]*Umn.shape[1];
-  #pragma omp parallel for simd
   for (int i = 0; i < Umn_res.shape[0]; i++) {
     for (int j = 0; j < Umn_res.shape[1]; j++) {
-    Umn_res(i, j) = Umn(i, j)/N;
+      // devide each result by Nx*Ny 
+      Umn_res(i, j) = Umn(i, j)/(Umn.shape[0]*Umn.shape[1]);
     }
   }
-  writeToFile(Umn_res, "whatthe");
+  // writeToFile(Umn_res, "whatthe");
 }
 
 // __________________________________________________________________
@@ -89,22 +88,24 @@ void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
 
 // __________________________________________________________________
 matrix BoussinesqFFT(double size, int grid) {
+
+
   double Lx = size, Ly = size;
   int Nx = grid, Ny = grid;
-  double pSize = size/2.;
+  double pSize = 1;
   double dx = (Lx/Nx);
   double dy = (Ly/Ny);
 
   int lb = Nx/2-(pSize/dx)/2;
   int ub = Ny/2+(pSize/dy)/2;
 
+  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
+  cMatrix Gmn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix p({Gmn.shape[0], Gmn.shape[1]});
+  cMatrix p_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
   matrix tempP({Nx, Ny});
-  matrix p({2*Nx, 2*Ny});
-  cMatrix p_tild({2*Nx, (2*Ny)/2-1});
-  matrix Gmn({2*Nx, 2*Ny});
-  cMatrix Gmn_tild({2*Nx, (2*Ny)/2-1});
-  matrix Umn({Nx*2, Ny*2});
-  cMatrix Umn_tild({2*Nx, (2*Ny)/2-1});
+  matrix Umn({Gmn.shape[0], Gmn.shape[1]});
+  cMatrix Umn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
   matrix Umn_res({Nx, Ny});
 
   initializePressureArray(tempP, lb, ub, 1.);

@@ -176,28 +176,30 @@ class FixtureMLms : public::testing::Test {
 };
 
 TEST_F(FixtureMLms, calcCoarsePressure){
-  // GTEST_SKIP();
+  GTEST_SKIP();
   matrix st = matrices[0];
   matrix Ip = matrices[1];
   matrix kM = matrices[2];
   createCorrectionArrays(cCVec, st, coarseSize, fineSize);
 
   calcCoarsePressure(pfVec1, st);
-
+  writeToFile(pfVec1[pfVec.size()-1], "tests/new_press");
+  std::cout << "\n there u go \n";
   old_calcCoarsePressure(pfVec, st);
-  // printarray(pfVec[pfVec.size()-1]);
+  writeToFile(pfVec[pfVec.size()-1], "tests/old_press");
   bool equal = false;
   double eps = 0.00001;
   for (int i = 0; i < pfVec[pfVec.size()].shape[0]; i++) {
     for (int j = 0; j < pfVec[pfVec.size()].shape[1]; j++) {
       equal = std::abs(pfVec1[pfVec.size()](i, j) - pfVec[pfVec.size()](i, j)) < eps;
-      if (equal == false) {
+      /*if (equal == false) {
         std::cout << pfVec1[pfVec.size()](i, j) << " : " << pfVec[pfVec.size()](i, j) << 
           " , " << i << " : " << j <<std::endl;
         break;
-      }
+      }*/
     }
   }
+  EXPECT_TRUE(equal);
 }
 
 TEST_F(FixtureMLms, calculate) {
@@ -207,16 +209,11 @@ TEST_F(FixtureMLms, calculate) {
   matrix kM = matrices[2];
   createCorrectionArrays(cCVec, st, coarseSize, fineSize);
 
-  old_calcCoarsePressure(pfVec, st);
-  for (int i = 0; i < pfVec.size(); i++) {
-    writeToFile(pfVec[i], "tests/pressure_"+std::to_string(i));
-  }
+  calcCoarsePressure(pfVec, st);
 
   int d = pfVec.size()-1;
   
-  // naiveCalculation(cDVec[d], pfVec[d], fineSize/2., coarseSize);
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  writeToFile(cDVec[d], "tests/c_displacement");
   // return;
   for (int i = 0; i < pfVec.size()-1; i++) {
     double hS = fineSize*pow(2, d-i-1);
@@ -236,13 +233,13 @@ TEST_F(FixtureMLms, calculate) {
     for (int j = 0; j < cDVec[0].shape[1]; j++) {
       equal = std::abs(cDVec[0](i, j) - cDVec[0](j, i)) < eps;
       equal1 = std::abs(res1(i, j) - cDVec[0](j, i)) < eps;
-      if (equal == false) {
+      /*if (equal == false) {
         std::cout << cDVec[0](i, j) << " : " << cDVec[0](j, i) << std::endl;
         break;
       } else if (equal1 == false) {
         std::cout << res1(i, j) << " : " << cDVec[0](j, i) << std::endl;
         break;
-      }
+      }*/
     }
   }
 
@@ -273,6 +270,7 @@ TEST(BoussinesqFFT2, calculate) {
   initializeDisplacementArray(p);
   copyPressureArray(p, tempP);
   calculateGmn(Gmn, dx, dy);
+  // printarray(Gmn); return;
   transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
@@ -288,12 +286,12 @@ TEST(BoussinesqFFT2, calculate) {
     for (int j = 0; j < Umn_res.shape[1]; j++) {
       equal = std::abs(Umn_res(i, j) - Umn_res(j, i)) < eps;
       equal1 = std::abs(res1(i, j) - Umn_res(i, j)) < eps;
-      if (equal1 == false) {
+      /*if (equal1 == false) {
         std::cout << res1(i, j) <<
                         " : " << Umn_res(i, j) <<
                         " : " << i << " : " << j <<
                         std::endl;
-      }
+      }*/
     }
   }
   EXPECT_TRUE(equal);

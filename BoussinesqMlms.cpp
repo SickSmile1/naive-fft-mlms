@@ -41,7 +41,7 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
 }
 
 // __________________________________________________________________
-void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
+void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
                         const matrix& st) {
   int t = st.shape[0]/2;
   for (int level = 0; level <= pFVec.size()-2; level++) {
@@ -102,8 +102,9 @@ void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
 }
 
 // __________________________________________________________________
-void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
+void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
                         const matrix& st) {
+
   int t = st.shape[0]/2;
   for (int level = 0; level <= pFVec.size()-2; level++) {
     matrix &pC = pFVec[level+1];

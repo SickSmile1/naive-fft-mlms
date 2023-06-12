@@ -73,7 +73,7 @@ std::size_t correction_size(int t, std::array<std::size_t, 2> shape) {
 }
 
 double interpolate(const matrix& fine, std::vector<double> stencil, int m, int n) {
-  int t = stencil.size() / 2;
+4 int t = stencil.size() / 2;
   int i = 2 * (m - t + 1), j = 2 * (n - t + 1);
   int Nx = fine.shape[0], Ny = fine.shape[1];
 
