@@ -26,7 +26,7 @@ int main() {
 
   matrix res({100, 9});
   int ct = 0;
-  for (int i = 16; i < 4000; i*=2) {
+  for (int i = 16; i < 4000; i+=20) {
     matrix res_t2 = BoussinesqMlms(2., i, 2);
     matrix res_t3 = BoussinesqMlms(2., i, 3);
     matrix res_t4 = BoussinesqMlms(2., i, 4);
