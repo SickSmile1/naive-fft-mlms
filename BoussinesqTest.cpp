@@ -224,7 +224,6 @@ TEST_F(FixtureMLms, calculate) {
   int d = pfVec.size()-1;
   
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  writeToFile(cDVec[d], "tests/c_displacement");
   // return;
   for (int i = 0; i < pfVec.size()-1; i++) {
     double hS = fineSize*pow(2, d-i-1);
