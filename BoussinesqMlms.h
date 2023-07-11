@@ -7,7 +7,7 @@
 matrix initializeStylusArray(int t); // NOLINT
 
 void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
-                    const matrix kM, int grid, // NOLINT
+                    const matrix kM, // NOLINT
                     std::vector<matrix>& pfVec,
                     std::vector<matrix>& cDVec);
 
@@ -15,9 +15,9 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
 void naiveCalculation(matrix &Ic, const matrix &Pa, double cell_size); // NOLINT
 
 // inner loop calling the calulation for every n
-inline double calcBoussinesq(double a, double b, double x, double y);
+double calcBoussinesq(double a, double b, double x, double y);
 
-inline double calcBoussinesq(int i, int j, double dxc, double dyc,
+double calcBoussinesq(int i, int j, double dxc, double dyc,
     double dxf, double dyf);
 
 // actual calculation
@@ -33,6 +33,8 @@ void calc_displacement(const matrix &pF, double cS, double fS,
 void calcCoarsePressure(std::vector<matrix> &pFVec, // NOLINT
                         const matrix& st);
 
+void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
+                        const matrix& st);
 // coarse pressure array calculation
 // void calc_coarse_pressure(const matrix &fP, const matrix &st,
 //                           matrix &cP, std::size_t t); // NOLINT
@@ -71,6 +73,8 @@ void secondCorrectionStep(const matrix& st, // NOLINT
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
                             double fineSize);
+
+matrix BoussinesqMlms(double size, int grid1, int t);
 
 #endif  // BOUSSINESQMLMS_H_
 

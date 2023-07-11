@@ -20,10 +20,10 @@ matrix initializeStylusArray(int t) { // NOLINT
 
 // __________________________________________________________________
 void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
-                    const matrix kM, const int grid, // NOLINT
+                    const matrix kM, // NOLINT
                     std::vector<matrix>& pfVec, // NOLINT
                     std::vector<matrix>& cDVec) { // NOLINT
-                    // std::vector<int> &qs) { // NOLINT
+  const int grid = kM.shape[0];
   pfVec.push_back(Ip);
   cDVec.push_back(kM);
   double qLevel = std::log2(grid * grid)/2-1;
@@ -37,13 +37,74 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
     matrix temp({q, q});
     pfVec.push_back(temp);
     cDVec.push_back(temp);
-    // qs.push_back(q);
+  }
+}
+
+// __________________________________________________________________
+void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
+                        const matrix& st) {
+  int t = st.shape[0]/2;
+  for (int level = 0; level <= pFVec.size()-2; level++) {
+    matrix &pC = pFVec[level+1];
+    for (int m = 0; m < pC.shape[0]; m++) {
+      for (int n = 0; n < pC.shape[1]; n++) {
+        // establish bigger boundaries to interpolate pressure on the
+        // edges of the grid
+        int i = 2*(m-t+1);
+        int j = 2*(n-t+1);
+        // determine loop boundaries to avoid boundary checks
+        int lb_i = 1, lb_j =1;
+        int ub_i = 2*t, ub_j = 2*t;
+        if (i < 2*t) {
+          lb_i = t*2-m;
+        }
+        if (i > (pFVec[level].shape[0]-2*t)) {
+          ub_i = (pC.shape[0]-m);
+        }
+        if (j < 2*t) {
+          lb_j = t*2-m;
+        }
+        if (j > (pFVec[level].shape[0]-2*t)) {
+          ub_j = (pC.shape[0]-n);
+        }
+        // interpolate pressure for m, n from i, j of coarse pressure
+        // array
+        pC(m, n) = 0;
+        double res = 0;
+        if (!boundaryCheck(pFVec[level], i, j)) {
+          res += 0;
+        } else {
+          res += pFVec[level](i, j);
+        }
+        if ((j > 0)&(j < pFVec[level].shape[0])) {
+          for (int k = lb_i; k <= ub_i; k++) {
+            int pi = i+2*(k-t)-1;
+            res += st(k-1, 0)*pFVec[level](pi, j);
+          }
+        }
+        if ((i > 0) & (i < pFVec[level].shape[1])) {
+          for (int k = lb_j; k <= ub_j; k++) {
+            int pj = j+2*(k-t)-1;
+            res += st(k-1, 0)*pFVec[level](i, pj);
+          }
+        }
+        for (int k = lb_i; k <= ub_i; k++) {
+          for (int l = lb_j; l <= ub_j; l++) {
+            int pi = i+2*(k-t)-1;
+            int pj = j+2*(l-t)-1;
+            res += st(k-1, 0)*st(l-1,0)*pFVec[level](pi, pj);
+          }
+        }
+        pC(m, n) = res; // i+2*(1-t)-1;
+      }
+    }
   }
 }
 
 // __________________________________________________________________
 void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
                         const matrix& st) {
+
   int t = st.shape[0]/2;
   for (int level = 0; level <= pFVec.size()-2; level++) {
     matrix &pC = pFVec[level+1];
@@ -369,3 +430,54 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
   cCVec.push_back(cC3);
   cCVec.push_back(cC4);
 }
+
+// __________________________________________________________________
+matrix BoussinesqMlms(double size, int grid1, int t) {
+  // const double size = 2;
+  // const double size_p = 1;
+  const double pressure = 1.;
+
+  double size_p = size/2;
+
+  double fineSizeA = size / grid1;
+
+  matrix kM({grid1, grid1});
+  matrix Ip({grid1, grid1});
+
+  double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
+  double upper_b = (grid1)/2. + (size_p/fineSizeA)/2.;
+
+  initializePressureArray(Ip, lower_b, upper_b, pressure);
+
+  // int t = 4;
+  int mc = 2*t;
+  
+  matrix st = initializeStylusArray(t);
+
+  std::vector<matrix> pfVec;
+  std::vector<matrix> cDVec;
+
+  initializeStack(st, t, Ip, kM, pfVec, cDVec);
+  double d = pfVec.size()-1;
+
+  double coarseSize = fineSizeA*pow(2, d);
+  std::vector<matrix> cCVec;
+  cCVec.reserve(3);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSizeA);
+
+  calcCoarsePressure(pfVec, st);
+  calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
+  for (int i = 0; i < pfVec.size()-1; i++) {
+    double hS = fineSizeA*pow(2, d-i-1);
+    int temp_mc = (mc*2)+1;
+    matrix cC({temp_mc, temp_mc});
+    correctionSteps(cC, st, mc, t, fineSizeA, hS);
+    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
+    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
+    secondCorrectionStep(st, hS,
+                         pfVec[d-i-1], cDVec[d-i-1], cCVec);
+  }
+  return cDVec[0];
+}
+
+

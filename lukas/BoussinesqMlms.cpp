@@ -16,7 +16,7 @@ grid_stack::grid_stack(const matrix& fine, vec2d pixel, int t, std::size_t level
   pixel_sizes.push_back(pixel);
   stencil = make_stencil(t);
 
-  auto one = make_stencil(2);
+  /*auto one = make_stencil(2);
   auto two = make_stencil(4);
   auto three = make_stencil(6);
 
@@ -33,7 +33,7 @@ grid_stack::grid_stack(const matrix& fine, vec2d pixel, int t, std::size_t level
    for (int i = 0; i < three.size(); i++) {
       std::cout << three[i] << std::endl;
   }
-  std::cout << "\n\n" << std::endl;
+  std::cout << "\n\n" << std::endl;*/
   for (std::size_t q = 1; q < levels; ++q) {
     add_level();
   }
@@ -73,7 +73,7 @@ std::size_t correction_size(int t, std::array<std::size_t, 2> shape) {
 }
 
 double interpolate(const matrix& fine, std::vector<double> stencil, int m, int n) {
-  int t = stencil.size() / 2;
+4 int t = stencil.size() / 2;
   int i = 2 * (m - t + 1), j = 2 * (n - t + 1);
   int Nx = fine.shape[0], Ny = fine.shape[1];
 

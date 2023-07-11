@@ -55,38 +55,6 @@ double calcBoussinesq(int i, int j, double dxc, double dyc,
     double dxf, double dyf) {
   return calcBoussinesq(dxf/2, dyf/2, i*dxc, j*dyc);
 }
-// __________________________________________________________________
-void naiveCalculation(matrix &Ic, const matrix &Pa, // NOLINT
-                double cell_size) {
-  // outer loop over grid to call displacement calculation
-  int shape = Ic.shape[0]-1;
-  for (int i = 0; i < Ic.shape[0]/2; i++) {
-    for (int j = 0; j < Ic.shape[1]/2; j++) {
-      Ic(i, j) = calc_displacement(Pa, Ic, i, j, cell_size/2,
-                          cell_size/2, cell_size);
-      Ic(shape-i, shape-j) = Ic(i, j);
-      Ic(i, shape-j) = Ic(i, j);
-      Ic(shape-i, j) = Ic(i, j);
-    }
-  }
-}
-
-// __________________________________________________________________
-double calc_displacement(const matrix &pressure,
-              const matrix &Ic,
-              double y, double x,
-              double a, double b, double cell) {
-  double res = 0;
-
-  for (int i = 0; i < Ic.shape[0]; i+=1) {
-    for (int j = 0; j < Ic.shape[1]; j+=1) {
-      double xj = (x*cell)-(j*cell);
-      double yi = (y*cell)-(i*cell);
-      res += calcBoussinesq(a, b, xj, yi) * pressure(i, j);
-    }
-  }
-  return res;
-}
 
 void calc_displacement(const matrix &pF, double cS, double fS,
                          matrix &cD) { // NOLINT
