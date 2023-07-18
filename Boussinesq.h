@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iomanip>
 // #include <eigen3/Eigen/Dense>
 // #include<eigen3/Eigen/StdVector>
 
@@ -67,6 +68,7 @@ template <class T>
 void writeToFile(const matrixTemplate<T> &arr, const std::string name) {
   std::ofstream file;
   file.open(name, std::ofstream::out | std::ofstream::trunc);
+  file << std::fixed << std::setprecision(8);
   for (int i = 0; i < arr.shape[0]; i++) {
     for (int j = 0; j < arr.shape[1]; j++) {
       file << arr(i, j);

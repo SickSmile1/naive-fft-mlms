@@ -102,8 +102,8 @@ void MlmsLoop2(size_t grid) {
   double lower_b = (grids)/2. - (size_p/fineSize)/2.;
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
-  int t = 6;
-  int mc = 2*t;
+  int t = 2;
+  int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
   std::vector<matrix> pfVec, cDVec, cCVec;
   matrix st = initializeStylusArray(t);
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
@@ -129,24 +129,23 @@ static void Mlms2(benchmark::State &state) {
   for (auto _ : state) {
       MlmsLoop2(state.range(0));
   }
-  state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
+BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
 
 void MlmsLoop1(size_t grid) {
   double size = 2;
   double size_p = 1;
   double pressure = 1.;
-  int grids = grid;
+  int grids = grid+1;
   double fineSize = size / grids;
   matrix kM({grids, grids});
   matrix Ip({grids, grids});
   double lower_b = (grids)/2. - (size_p/fineSize)/2.;
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
-  int t = 8;
-  int mc = 2*t;
+  int t = 2;
+  int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
   std::vector<matrix> pfVec, cDVec, cCVec;
   matrix st = initializeStylusArray(t);
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
@@ -172,14 +171,13 @@ static void Mlms1(benchmark::State &state) {
   for (auto _ : state) {
       MlmsLoop1(state.range(0));
   }
-  state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
+BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
 
 void FftLoop(size_t grids) {
   double Lx = 2., Ly = 2.;
-  int Nx = grids, Ny = grids;
+  int Nx = grids+1, Ny = grids+1;
   double pSize = 1;
   double dx = (Lx/Nx);
   double dy = (Ly/Ny);
@@ -198,8 +196,11 @@ void FftLoop(size_t grids) {
 
   initializePressureArray(tempP, lb, ub, 1.);
   initializeDisplacementArray(p);
+
   copyPressureArray(p, tempP);
+
   calculateGmn(Gmn, dx, dy);
+
   transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
@@ -207,15 +208,16 @@ void FftLoop(size_t grids) {
   transformToReal(Umn_tild, Umn, Nx, Ny);
 
   writeToResultArray(Umn, Umn_res, Nx, Ny);
+  
+  // return Umn_res;
 }
 
 static void FFT(benchmark::State &state) {
   for (auto _ : state) {
       FftLoop(state.range(0));
   }
-  state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
+BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
