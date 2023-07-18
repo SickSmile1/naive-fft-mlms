@@ -10,13 +10,9 @@
 #include "BoussinesqFft.h"
 #include "BoussinesqTimer.h"
 
-//#include "lukas/BoussinesqMlms.hh"
-//#include "lukas/BoussinesqMatrix.hh"
-//#include "lukas/Boussinesq.hh"
-//#include <iomanip>
-
 
 /*TEST(filename, function){
+ TEMPLATE FOR TESTS
   function values
   ASSERT_EQ(res, function call);
 }*/
@@ -168,7 +164,7 @@ class FixtureMLms : public::testing::Test {
     initializePressureArray(Ip, lower_b, upper_b, pressure);
 
     t = 4;
-    mc = 2*t;
+    mc = std::max(0.7*t*std::pow(grid1,1./t)-1,t*1.);
 
     matrix st = initializeStylusArray(t);
 
@@ -184,30 +180,6 @@ class FixtureMLms : public::testing::Test {
   void TearDown() override {}
 };
 
-TEST_F(FixtureMLms, calcCoarsePressure){
-  // GTEST_SKIP();
-  matrix st = matrices[0];
-  matrix Ip = matrices[1];
-  matrix kM = matrices[2];
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
-
-  calcCoarsePressure(pfVec1, st);
-  old_calcCoarsePressure(pfVec, st);
-  writeToFile(pfVec[pfVec.size()-1], "tests/old_press");
-  bool equal = false;
-  double eps = 0.00001;
-  for (int i = 0; i < pfVec[pfVec.size()].shape[0]; i++) {
-    for (int j = 0; j < pfVec[pfVec.size()].shape[1]; j++) {
-      equal = std::abs(pfVec1[pfVec.size()](i, j) - pfVec[pfVec.size()](i, j)) < eps;
-      if (equal == false) {
-        std::cout << pfVec1[pfVec.size()](i, j) << " : " << pfVec[pfVec.size()](i, j) << 
-          " , " << i << " : " << j <<std::endl;
-        break;
-      }
-    }
-  }
-  EXPECT_TRUE(equal);
-}
 
 TEST_F(FixtureMLms, calculate) {
   // GTEST_SKIP();
@@ -216,15 +188,10 @@ TEST_F(FixtureMLms, calculate) {
   matrix kM = matrices[2];
   createCorrectionArrays(cCVec, st, coarseSize, fineSize);
 
-  old_calcCoarsePressure(pfVec, st);
-  for (int i = 0; i < pfVec.size(); i++) {
-    writeToFile(pfVec[i], "tests/pressure_"+std::to_string(i));
-  }
-
   int d = pfVec.size()-1;
   
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  // return;
+  
   for (int i = 0; i < pfVec.size()-1; i++) {
     double hS = fineSize*pow(2, d-i-1);
     int temp_mc = (mc*2)+1;
@@ -243,112 +210,18 @@ TEST_F(FixtureMLms, calculate) {
     for (int j = 0; j < cDVec[0].shape[1]; j++) {
       equal = std::abs(cDVec[0](i, j) - cDVec[0](j, i)) < eps;
       equal1 = std::abs(res1(i, j) - cDVec[0](j, i)) < eps;
-      /*if (equal == false) {
-        std::cout << cDVec[0](i, j) << " : " << cDVec[0](j, i) << std::endl;
+      if (equal == false) {
+        std::cout << cDVec[0](i, j) << " : " << cDVec[0](i, j) << std::endl;
         break;
       } else if (equal1 == false) {
-        std::cout << res1(i, j) << " : " << cDVec[0](j, i) << std::endl;
+        std::cout << res1(i, j) << " : " << cDVec[0](i, j) << std::endl;
         break;
-      }*/
+      }
     }
   }
 
   EXPECT_TRUE(equal);
   EXPECT_TRUE(equal1);
-}
-
-TEST_F(FixtureMLms, compareMlms) {
-  /*matrix st = matrices[0];
-  matrix Ip = matrices[1];
-  matrix kM = matrices[2];
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
-
-  old_calcCoarsePressure(pfVec, st);
-  for (int i = 0; i < pfVec.size(); i++) {
-    writeToFile(pfVec[i], "tests/pressure_"+std::to_string(i));
-  }
-
-  int d = pfVec.size()-1;
-  
-  // naiveCalculation(cDVec[d], pfVec[d], fineSize/2., coarseSize);
-  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  // writeToFile(cDVec[d], "tests/c_displacement");
-  // return;
-  for (int i = 0; i < pfVec.size()-1; i++) {
-    double hS = fineSize*pow(2, d-i-1);
-    int temp_mc = (mc*2)+1;
-    matrix cC({temp_mc, temp_mc});
-    correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
-    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    secondCorrectionStep(st, hS,
-                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
-  }
-  resMlms_8 = cDVec[0];
-  writeToFile(resMlms_8, "res_mlms1024");*/
-  /*double Lx = 2, Ly = 2;
-  std::size_t Nx = grids2, Ny = grids2;
-
-  vec2d pixel = {Lx / Nx, Ly / Ny};
-
-  matrix1 pressure({Nx, Ny}), displacement({Nx, Ny});
-
-  // initialize pressure
-  for (std::size_t i = 0; i < pressure.shape[0]; ++i) {
-    for (std::size_t j = 0; j < pressure.shape[1]; ++j) {
-      if (i >= Nx/4 and i < 3 * Nx / 4 and j >= Nx/4 and j < 3 * Ny / 4) {
-        pressure(i, j) = 1.;
-      } else {
-        pressure(i, j) = 0.;
-      }
-    }
-  }
-
-  // compute deflection
-  // naive(pressure, displacement, pixel, pixel);
-  // std::cout << displacement;
-  // return 0;
-
-  int t = 4, levels = optimal_levels(pressure.shape);
-
-  grid_stack pressure_stack(pressure, pixel, t, levels),
-    displacement_stack(displacement, pixel, t, levels);
-  auto mc = correction_size(t, pressure.shape);
-
-  pressure_stack.coarsen();
-
-  // std::cout << pressure_stack.stack.back();
-  compute_coarse_displacements(pressure_stack, displacement_stack);
-  // std::cout << displacement_stack.stack.back();
-
-  auto corrections = coarse_corrections(pressure_stack, mc);
-  auto fcorrections = fine_corrections(displacement_stack, mc);
-
-  // for (auto&& C : corrections)
-  //   std:: cout << C << "-----\n";
-
-
-  // for (auto&& Cs : fcorrections)
-  //   for (auto&& C : Cs)
-  //     std:: cout << C << "-----\n";
-
-  refine(pressure_stack, displacement_stack, corrections, fcorrections);
-  resMlms_9 = displacement_stack.stack.front();
-
-  double eps = 0.0000001; 
-  bool equal = 1;
-  for (int i = 0; i < resMlms_8.shape[0]; i++) {
-    for (int j = 0; j < resMlms_8.shape[1]; j++) {
-      equal = std::abs(resMlms_8(i, j) - resMlms_9(j, i)) < eps;
-      if (equal == false) {
-        std::cout << resMlms_8(i, j) <<
-                        " : " << resMlms_9(i, j) <<
-                        " : " << i << " : " << j <<
-                        std::endl;
-      }
-    }
-  }
-  EXPECT_TRUE(equal);*/
 }
 
 TEST(BoussinesqFFT2, calculate) {
@@ -374,7 +247,7 @@ TEST(BoussinesqFFT2, calculate) {
   initializeDisplacementArray(p);
   copyPressureArray(p, tempP);
   calculateGmn(Gmn, dx, dy);
-  // printarray(Gmn); return;
+
   transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
@@ -390,12 +263,12 @@ TEST(BoussinesqFFT2, calculate) {
     for (int j = 0; j < Umn_res.shape[1]; j++) {
       equal = std::abs(Umn_res(i, j) - Umn_res(j, i)) < eps;
       equal1 = std::abs(res1(i, j) - Umn_res(i, j)) < eps;
-      /*if (equal1 == false) {
+      if (equal1 == false) {
         std::cout << res1(i, j) <<
                         " : " << Umn_res(i, j) <<
                         " : " << i << " : " << j <<
                         std::endl;
-      }*/
+      }
     }
   }
   EXPECT_TRUE(equal);
@@ -413,7 +286,7 @@ TEST(tsquare_norm, mlms_fft) {
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
   int t = 2;
-  int mc = 2*t;
+  int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
   std::vector<matrix> pfVec, cDVec, cCVec;
   matrix st = initializeStylusArray(t);
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
@@ -442,7 +315,7 @@ TEST(tsquare_norm, mlms_fft) {
   }
 
   t = 3;
-  mc = 2*t;
+  mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
   std::vector<matrix> pfVec2, cDVec2, cCVec2;
   st = initializeStylusArray(t);
   initializeStack(st, t, Ip, kM, pfVec2, cDVec2);

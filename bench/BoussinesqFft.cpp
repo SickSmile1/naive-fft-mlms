@@ -66,14 +66,13 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
 // __________________________________________________________________
 void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
                         int Nx, int Ny) { //NOLINT
-  int N = Umn.shape[0]*Umn.shape[1];
-  #pragma omp parallel for simd
+  // #pragma omp parallel for simd
   for (int i = 0; i < Umn_res.shape[0]; i++) {
     for (int j = 0; j < Umn_res.shape[1]; j++) {
-    Umn_res(i, j) = Umn(i, j)/N;
+    Umn_res(i, j) = Umn(i, j)/Umn.shape[0]*Umn.shape[1];
     }
   }
-  writeToFile(Umn_res, "whatthe");
+  // writeToFile(Umn_res, "whatthe");
 }
 
 // __________________________________________________________________

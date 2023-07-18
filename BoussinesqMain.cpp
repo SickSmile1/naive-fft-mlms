@@ -4,6 +4,7 @@
 // #include "./MlmsTimer.h"
 #include "./BoussinesqMlms.h"
 #include "./BoussinesqFft.h"
+#include "bench/Boussinesq.h"
 
 int main() {
   // initial size and pressure values
@@ -11,7 +12,7 @@ int main() {
   // runTimerLoops();
   // BoussinesqFFT();
   
-  auto means = [](double min, double max, double mean, const matrix v1, const matrix v2) {
+  auto means = [](double &min, double &max, double &mean, const matrix v1, const matrix v2) {
     double res1 = 0;
     for (int i = 0; i < v1.shape[0]; i++) {
       for (int j = 0; j < v1.shape[0]; j++) {
@@ -26,7 +27,7 @@ int main() {
 
   matrix res({100, 9});
   int ct = 0;
-  for (int i = 16; i < 4000; i+=20) {
+  /*for (int i = 16; i < 2000; i+=20) {
     matrix res_t2 = BoussinesqMlms(2., i, 2);
     matrix res_t3 = BoussinesqMlms(2., i, 3);
     matrix res_t4 = BoussinesqMlms(2., i, 4);
@@ -47,10 +48,12 @@ int main() {
     res(ct, 7) = max;
     res(ct, 8) = mean;
     ct++;
-  }
+  }*/
 
-  // matrix res_t2 = BoussinesqMlms(2., 1048, 4);
-  writeToFile(res, "tests/res_l2");
+  matrix res_t2 = BoussinesqMlms(2., 2048, 2);
+  writeToFile(res_t2, "results/res_mlms2048");
+  // writeToFile(BoussinesqFFT(2.,2048), "results/res_fft3");
+  // writeToFile(res, "results/res_l2");
   return 0;
 }
 

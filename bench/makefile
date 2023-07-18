@@ -1,4 +1,4 @@
-CXX = g++ -O2 -std=c++20 # -Wall -fno-rtti -fno-exceptions -pedantic -lpthread -fno-omit-frame-pointer -DCMAKE_BUILD_TYPE=Release
+CXX = g++ -O3 -std=c++20  # -Wall -fno-rtti -fno-exceptions -pedantic -lpthread -fno-omit-frame-pointer -DCMAKE_BUILD_TYPE=Release
 #CXX = g++ -O3 -std=c++20 -fno-exceptions -fno-rtti
 # CXX = -pedantic -fno-elide-constructors -Wall -pedantic -std=c++11
 MAIN_BINARIES = $(basename $(wildcard *Main.cpp))

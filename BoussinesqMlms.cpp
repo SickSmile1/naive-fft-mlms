@@ -1,6 +1,7 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 #include "BoussinesqMlms.h"
 #include "Boussinesq.h"
+#include <algorithm>
 
 
 // __________________________________________________________________
@@ -450,7 +451,7 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
   initializePressureArray(Ip, lower_b, upper_b, pressure);
 
   // int t = 4;
-  int mc = 2*t;
+  int mc = std::max(0.7*t*std::pow(grid1,1./t)-1,t*1.);
   
   matrix st = initializeStylusArray(t);
 
