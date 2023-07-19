@@ -21,9 +21,6 @@ int grids = 64;
 matrix res1({grids, grids});
 matrix resMlms_6({grids, grids});
 matrix resFft({grids, grids});
-int grids2 = 1048;
-matrix resMlms_8({grids2, grids2});
-matrix resMlms_9({grids2, grids2});
 
 TEST(BoussinesqNaive, calculate) {
   // GTEST_SKIP();
@@ -136,89 +133,30 @@ TEST(BoussinesqMlms, initializeStylusArray) {
   ASSERT_EQ(st2(5, 0), (1./256)*3);
 }
 
-class FixtureMLms : public::testing::Test {
- protected:
-  int t, q, grid1, grid2, mc;
-  double size, size_p, pressure, fineSize,
-            coarseSize;
-  std::vector<matrix> pfVec, cDVec, cCVec;
-  std::vector<matrix> matrices;
-  std::vector<matrix> pfVec1;
-  void SetUp() override {
-    size = 2;
-    size_p = 1;
-    pressure = 1.;
-
-      // initial grid size for initialization
-    grid1 = grids;
-    grid2 = grids;
-
-    fineSize = size / grids;
-
-    matrix kM({grids, grids});
-    matrix Ip({grids, grids});
-
-    double lower_b = (grids)/2. - (size_p/fineSize)/2.;
-    double upper_b = (grids)/2. + (size_p/fineSize)/2.;
-
-    initializePressureArray(Ip, lower_b, upper_b, pressure);
-
-    t = 4;
-    mc = std::max(0.7*t*std::pow(grid1,1./t)-1,t*1.);
-
-    matrix st = initializeStylusArray(t);
-
-    initializeStack(st, t, Ip, kM, pfVec, cDVec);
-
-    pfVec1 = pfVec;
-    coarseSize = fineSize*pow(2, pfVec.size()-1);
-    cCVec.reserve(3);
-    matrices.push_back(st);
-    matrices.push_back(Ip);
-    matrices.push_back(kM);
-  }
-  void TearDown() override {}
-};
 
 
-TEST_F(FixtureMLms, calculate) {
+TEST(TestMlms, calculate) {
   // GTEST_SKIP();
-  matrix st = matrices[0];
-  matrix Ip = matrices[1];
-  matrix kM = matrices[2];
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
 
-  int d = pfVec.size()-1;
-  
-  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  
-  for (int i = 0; i < pfVec.size()-1; i++) {
-    double hS = fineSize*pow(2, d-i-1);
-    int temp_mc = (mc*2)+1;
-    matrix cC({temp_mc, temp_mc});
-    correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
-    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    secondCorrectionStep(st, hS,
-                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
-  }
-  resMlms_6 = cDVec[0];
+  resMlms_6 = BoussinesqMlms(2., grids, 3);
   bool equal = false;
   bool equal1 = false;
   double eps = 0.05;
-  for (int i = 0; i < cDVec[0].shape[0]; i++) {
-    for (int j = 0; j < cDVec[0].shape[1]; j++) {
-      equal = std::abs(cDVec[0](i, j) - cDVec[0](j, i)) < eps;
-      equal1 = std::abs(res1(i, j) - cDVec[0](j, i)) < eps;
+  for (int i = 0; i < resMlms_6.shape[0]; i++) {
+    for (int j = 0; j < resMlms_6.shape[1]; j++) {
+      equal = std::abs(resMlms_6(i, j) - resMlms_6(j, i)) < eps;
+      equal1 = std::abs(res1(i, j) - resMlms_6(j, i)) < eps;
       if (equal == false) {
-        std::cout << cDVec[0](i, j) << " : " << cDVec[0](i, j) << std::endl;
+        std::cout << resMlms_6(i, j) << " : " << resMlms_6(i, j) << std::endl;
         break;
       } else if (equal1 == false) {
-        std::cout << res1(i, j) << " : " << cDVec[0](i, j) << std::endl;
+        std::cout << res1(i, j) << " : " << resMlms_6(i, j) << std::endl;
         break;
       }
     }
   }
+  writeToFile(resMlms_6, "results/BTest64");
+  writeToFile(res1, "results/BTest64_naive");
 
   EXPECT_TRUE(equal);
   EXPECT_TRUE(equal1);
@@ -276,81 +214,29 @@ TEST(BoussinesqFFT2, calculate) {
 }
 
 TEST(tsquare_norm, mlms_fft) {
-  double size = 2;
-  double size_p = 1;
-  double pressure = 1.;
-  double fineSize = size / grids;
-  matrix kM({grids, grids});
-  matrix Ip({grids, grids});
-  double lower_b = (grids)/2. - (size_p/fineSize)/2.;
-  double upper_b = (grids)/2. + (size_p/fineSize)/2.;
-  initializePressureArray(Ip, lower_b, upper_b, pressure);
-  int t = 2;
-  int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
-  std::vector<matrix> pfVec, cDVec, cCVec;
-  matrix st = initializeStylusArray(t);
-  initializeStack(st, t, Ip, kM, pfVec, cDVec);
-  double coarseSize = fineSize*pow(2, pfVec.size()-1);
-  cCVec.reserve(3);
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
-  calcCoarsePressure(pfVec, st);
-  int d = pfVec.size()-1;
-  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  for (int i = 0; i < pfVec.size()-1; i++) {
-    double hS = fineSize*pow(2, d-i-1);
-    int temp_mc = (mc*2)+1;
-    matrix cC({temp_mc, temp_mc});
-    correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
-    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    secondCorrectionStep(st, hS,
-                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
-  }
-
-  double res_t2 = 0;
-  for (int i = 0; i < cDVec[0].shape[0]; i++) {
-    for (int j = 0; j < cDVec[0].shape[0]; j++) {
-      res_t2 += std::abs(cDVec[0](i, j)-resFft(i, j));
+  matrix rest1 = BoussinesqMlms(2., grids, 1);
+  double res_t1 = 0;
+  for (int i = 0; i < rest1.shape[0]; i++) {
+    for (int j = 0; j < rest1.shape[0]; j++) {
+      res_t1 += std::abs(rest1(i, j)-resFft(i, j));
     }
   }
 
-  t = 3;
-  mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
-  std::vector<matrix> pfVec2, cDVec2, cCVec2;
-  st = initializeStylusArray(t);
-  initializeStack(st, t, Ip, kM, pfVec2, cDVec2);
-  coarseSize = fineSize*pow(2, pfVec2.size()-1);
-  cCVec2.reserve(3);
-  createCorrectionArrays(cCVec2, st, coarseSize, fineSize);
-  calcCoarsePressure(pfVec2, st);
-  d = pfVec2.size()-1;
-  calc_displacement(pfVec2[d], coarseSize, fineSize, cDVec2[d]);
-  for (int i = 0; i < pfVec2.size()-1; i++) {
-    double hS = fineSize*pow(2, d-i-1);
-    int temp_mc = (mc*2)+1;
-    matrix cC({temp_mc, temp_mc});
-    correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec2[d-i], cC, pfVec2[d-i-1], t);
-    interpolateGrid(cDVec2[d-i-1], cDVec2[d-i], st);
-    secondCorrectionStep(st, hS,
-                          pfVec2[d-i-1], cDVec2[d-i-1], cCVec2);
+  matrix rest2 = BoussinesqMlms(2., grids, 2);
+  double res_t2 = 0;
+  for (int i = 0; i < rest2.shape[0]; i++) {
+    for (int j = 0; j < rest2.shape[0]; j++) {
+      res_t2 += std::abs(rest2(i, j)-resFft(i, j));
+    }
   }
 
   double res_t3 = 0;
-  for (int i = 0; i < cDVec2[0].shape[0]; i++) {
-    for (int j = 0; j < cDVec2[0].shape[0]; j++) {
-      res_t3 += std::abs(cDVec2[0](i, j)-resFft(i, j));
+  for (int i = 0; i < rest2.shape[0]; i++) {
+    for (int j = 0; j < rest2.shape[0]; j++) {
+      res_t3 += std::abs(resMlms_6(i, j)-resFft(i, j));
     }
   }
-
-  
-  double res_t4 = 0;
-  for (int i = 0; i < cDVec2[0].shape[0]; i++) {
-    for (int j = 0; j < cDVec2[0].shape[0]; j++) {
-      res_t4 += std::abs(resMlms_6(i, j)-resFft(i, j));
-    }
-  }
-  EXPECT_LT(res_t4, res_t3);
   EXPECT_LT(res_t3, res_t2);
-  std::cout << res_t2 << " : " << res_t3 <<  " : " << res_t4 << std::endl;
+  EXPECT_LT(res_t2, res_t1);
+  std::cout << res_t1 << " : " << res_t2 <<  " : " << res_t3 << std::endl;
 }

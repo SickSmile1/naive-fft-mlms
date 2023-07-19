@@ -72,7 +72,9 @@ void writeToFile(const matrixTemplate<T> &arr, const std::string name) {
   for (int i = 0; i < arr.shape[0]; i++) {
     for (int j = 0; j < arr.shape[1]; j++) {
       file << arr(i, j);
-      file << "\t";
+      if(j < (arr.shape[1]-1)) {
+        file << "\t";
+      }
     }
     file << std::endl;
   }
@@ -100,5 +102,5 @@ double calc_displacement(const matrix &pressure,
               double a, double b, double cell);
 
 void calc_displacement(const matrix &pF, double cS, double fS,
-                         matrix &cD);
+                         matrix &cD); // NOLINT
 #endif  // BOUSSINESQ_H_

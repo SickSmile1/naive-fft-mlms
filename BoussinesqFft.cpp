@@ -19,8 +19,10 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
     double res = calcBoussinesq(i, 0, dx, dy, dx, dy);
     Gmn(i, 0) = res;
     Gmn(0, i) = res;
-    if (i>0) {Gmn((2*shape+1-i), 0) = res;
-    Gmn(0, (2*shape+1)-i) = res;}
+    if (i > 0) {
+      Gmn((2*shape+1-i), 0) = res;
+      Gmn(0, (2*shape+1)-i) = res;
+    }
   }
   for (int i = 1; i <= shape; i++) {
     for (int j = 1; j <= shape; j++) {
@@ -68,7 +70,7 @@ void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
                         int Nx, int Ny) { //NOLINT
   for (int i = 0; i < Umn_res.shape[0]; i++) {
     for (int j = 0; j < Umn_res.shape[1]; j++) {
-      // devide each result by Nx*Ny 
+      // devide each result by Nx*Ny
       Umn_res(i, j) = Umn(i, j)/(Umn.shape[0]*Umn.shape[1]);
     }
   }
@@ -120,6 +122,6 @@ matrix BoussinesqFFT(double size, int grid) {
   transformToReal(Umn_tild, Umn, Nx, Ny);
 
   writeToResultArray(Umn, Umn_res, Nx, Ny);
-  
+
   return Umn_res;
 }

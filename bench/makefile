@@ -5,7 +5,9 @@ MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))
 HEADERS = $(wildcard *.h) 
 OBJECTS = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard *.cpp))))
-LIBRARIES =  -lbenchmark -lfftw3 -lm
+LIBRARIES = -isystem benchmark/include \
+  -Lbenchmark/home/sick/Documents/GIT/benchmark -lbenchmark -lpthread -lfftw3 -lm
+# -lfftw3 -lm
 # -isystem benchmark\include
 .PRECIOUS: %.o
 .SUFFIXES:

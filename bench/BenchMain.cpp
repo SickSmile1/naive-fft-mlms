@@ -91,6 +91,32 @@ BENCHMARK(bench_calculation_loop)->Iterations(100);
 BENCHMARK(bench_calculation_loop)->Iterations(100);
 BENCHMARK(bench_calculation_loop)->Iterations(100);
 */
+void Naive_c(size_t grid) {
+  int grids = grid;
+  double size = 2;
+  double size_p = 1;
+  double cell_size = size/grid;
+
+  matrix Ic({grids, grids});
+  matrix Pa({grids, grids});
+
+  double pressure = 1.;
+  double lower_b = (size/cell_size)/2 - (size_p/cell_size)/2;
+  double upper_b = (size/cell_size)/2 + (size_p/cell_size)/2;
+
+  initializePressureArray(Pa, lower_b, upper_b, pressure);
+  initializeDisplacementArray(Ic);
+  calc_displacement(Pa, cell_size, cell_size, Ic);
+}
+
+static void Naive(benchmark::State &state) {
+  for (auto _ : state) {
+      Naive_c(state.range(0));
+  }
+}
+
+BENCHMARK(Naive)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
+
 void MlmsLoop2(size_t grid) {
   double size = 2;
   double size_p = 1;
@@ -102,14 +128,14 @@ void MlmsLoop2(size_t grid) {
   double lower_b = (grids)/2. - (size_p/fineSize)/2.;
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
-  int t = 2;
+  int t = 0.84*log(grids);
   int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
   std::vector<matrix> pfVec, cDVec, cCVec;
   matrix st = initializeStylusArray(t);
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
   double coarseSize = fineSize*pow(2, pfVec.size()-1);
   cCVec.reserve(3);
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSize, mc);
   old_calcCoarsePressure(pfVec, st);
   int d = pfVec.size()-1;
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
@@ -118,10 +144,10 @@ void MlmsLoop2(size_t grid) {
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     old_correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
+    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
     old_interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
     old_secondCorrectionStep(st, hS,
-                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
+                          pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
   }
 }
 
@@ -132,6 +158,7 @@ static void Mlms2(benchmark::State &state) {
 }
 
 BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
+
 
 void MlmsLoop1(size_t grid) {
   double size = 2;
@@ -144,14 +171,15 @@ void MlmsLoop1(size_t grid) {
   double lower_b = (grids)/2. - (size_p/fineSize)/2.;
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
   initializePressureArray(Ip, lower_b, upper_b, pressure);
-  int t = 2;
+  int t = 0.84*log(grids);
+  // int t = 2;
   int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
   std::vector<matrix> pfVec, cDVec, cCVec;
   matrix st = initializeStylusArray(t);
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
   double coarseSize = fineSize*pow(2, pfVec.size()-1);
   cCVec.reserve(3);
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize);
+  createCorrectionArrays(cCVec, st, coarseSize, fineSize, mc);
   calcCoarsePressure(pfVec, st);
   int d = pfVec.size()-1;
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
@@ -160,10 +188,10 @@ void MlmsLoop1(size_t grid) {
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
+    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
     interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
     secondCorrectionStep(st, hS,
-                          pfVec[d-i-1], cDVec[d-i-1], cCVec);
+                          pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
   }
 }
 
@@ -218,6 +246,6 @@ static void FFT(benchmark::State &state) {
   }
 }
 
-BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond);
+BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

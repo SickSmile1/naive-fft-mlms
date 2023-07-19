@@ -36,4 +36,4 @@ clean:
 	$(CXX) -c $<
 
 valgrind:
-	valgrind -s --tool=callgrind ./$(basename $(wildcard *Main.cpp))
+	valgrind -s --tool=callgrind --dump-instr=yes --collect-jumps=yes ./$(basename $(wildcard *Main.cpp))

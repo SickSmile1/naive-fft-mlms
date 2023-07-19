@@ -59,10 +59,10 @@ void old_correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
 
 
 void applyCorrection(matrix &coarseDisplacement, const matrix cC, // NOLINT
-                     const matrix Ip, int t);
+                     const matrix Ip, int t, int mc);
 
 double correctionHelper(const matrix& cC, const matrix& Ip, int t, // NOLINT
-                        int i, int j);
+                        int i, int j, int mc);
 
 void interpolateGrid(matrix &nextDisplacement, // NOLINT
                      const matrix coarseDisplacement, // NOLINT
@@ -74,16 +74,16 @@ void old_interpolateGrid(matrix &nextDisplacement, // NOLINT
 
 void secondCorrectionStep(const matrix& st, // NOLINT
                           double hS, const matrix& pF, // NOLINT
-                          matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
+                          matrix& cD, const std::vector<matrix> &cCVec, int mc);  // NOLINT
 
 
 void old_secondCorrectionStep(const matrix& st, // NOLINT
                           double hS, const matrix& pF, // NOLINT
-                          matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
+                          matrix& cD, const std::vector<matrix> &cCVec, int mc);  // NOLINT
 
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
-                            double fineSize);
+                            double fineSize, int mc);
 
 #endif  // BOUSSINESQMLMS_H_
 

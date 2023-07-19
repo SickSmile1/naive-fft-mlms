@@ -29,8 +29,9 @@ void runFastTimerLoops() {
     // material moduli and v
 
     int t = 4;
-    int mc = 2*t;
-    
+    int mc = std::max(0.7*t*std::pow(grid1,1./t)-1, t*1.);
+    // int mc = 2*t;
+
     matrix st = initializeStylusArray(t);
 
     std::vector<matrix> pfVec;
@@ -44,7 +45,7 @@ void runFastTimerLoops() {
     double coarseSize = fineSizeA*pow(2, d);
     std::vector<matrix> cCVec;
     cCVec.reserve(3);
-    createCorrectionArrays(cCVec, st, coarseSize, fineSizeA);
+    createCorrectionArrays(cCVec, st, coarseSize, fineSizeA, mc);
 
     // MeasureTime mt = MeasureTime();
     calcCoarsePressure(pfVec, st);
@@ -54,10 +55,10 @@ void runFastTimerLoops() {
       int temp_mc = (mc*2)+1;
       matrix cC({temp_mc, temp_mc});
       correctionSteps(cC, st, mc, t, fineSizeA, hS);
-      applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t);
+      applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
       interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
       secondCorrectionStep(st, hS,
-                           pfVec[d-i-1], cDVec[d-i-1], cCVec);
+                           pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
     }
     // auto stopped = mt.stopTime();
     // result(iteration, 0) = grid1;

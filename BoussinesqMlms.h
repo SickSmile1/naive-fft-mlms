@@ -29,6 +29,7 @@ double calc_displacement(const matrix &pressure,
 
 void calc_displacement(const matrix &pF, double cS, double fS,
                          matrix &cD);  // NOLINT
+void correctionLoop(matrix& cC, const matrix st, int i, int j, double fS, double hS,int t, int mc); // NOLINT
 
 void calcCoarsePressure(std::vector<matrix> &pFVec, // NOLINT
                         const matrix& st);
@@ -56,10 +57,10 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
 
 
 void applyCorrection(matrix &coarseDisplacement, const matrix cC, // NOLINT
-                     const matrix Ip, int t);
+                     const matrix Ip, int t, int mc);
 
 double correctionHelper(const matrix& cC, const matrix& Ip, int t, // NOLINT
-                        int i, int j);
+                        int i, int j, int mc);
 
 void interpolateGrid(matrix &nextDisplacement, // NOLINT
                      const matrix coarseDisplacement, // NOLINT
@@ -67,12 +68,13 @@ void interpolateGrid(matrix &nextDisplacement, // NOLINT
 
 void secondCorrectionStep(const matrix& st, // NOLINT
                           double hS, const matrix& pF, // NOLINT
-                          matrix& cD, const std::vector<matrix> &cCVec);  // NOLINT
+                          matrix& cD, const std::vector<matrix> &cCVec, // NOLINT
+                          int mc);  // NOLINT
 
 
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
-                            double fineSize);
+                            double fineSize, int mc);
 
 matrix BoussinesqMlms(double size, int grid1, int t);
 
