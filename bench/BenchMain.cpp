@@ -117,7 +117,7 @@ static void Naive(benchmark::State &state) {
 
 BENCHMARK(Naive)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
 
-void MlmsLoop2(size_t grid) {
+/*void MlmsLoop2(size_t grid) {
   double size = 2;
   double size_p = 1;
   double pressure = 1.;
@@ -157,7 +157,7 @@ static void Mlms2(benchmark::State &state) {
   }
 }
 
-BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
+BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);*/
 
 
 void MlmsLoop1(size_t grid) {
@@ -201,7 +201,7 @@ static void Mlms1(benchmark::State &state) {
   }
 }
 
-BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
+BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond);
 
 void FftLoop(size_t grids) {
   double Lx = 2., Ly = 2.;
@@ -246,6 +246,6 @@ static void FFT(benchmark::State &state) {
   }
 }
 
-BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
+BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

@@ -25,13 +25,13 @@ int main() {
     mean = std::sqrt(res1);
   };
 
-  matrix res({8, 9});
+  matrix res({10, 3});
   int ct = 0;
-  for (int i = 8; i < 1050; i*=2) {
-    matrix res_t2 = BoussinesqMlms(2., i, 2);
-    matrix res_t3 = BoussinesqMlms(2., i, 3);
-    matrix res_t4 = BoussinesqMlms(2., i, 4);
-    matrix res_fft = BoussinesqFFT(2., i);
+  for (int i = 8; i < 4100; i*=2) {
+    matrix res_t2 = BoussinesqMlms(2., i, 0.84*log(i));
+    //matrix res_t3 = BoussinesqMlms(2., i, 3);
+    // matrix res_t4 = BoussinesqMlms(2., i, 4);
+    matrix res_fft = BoussinesqFFT(2., i+1);
     double min_0 = std::numeric_limits<double>::min();
     double max_0 = std::numeric_limits<double>::max();
     double min = max_0, max = min_0, mean = 0;
@@ -39,7 +39,7 @@ int main() {
     res(ct, 0) = min;
     res(ct, 1) = max;
     res(ct, 2) = mean;
-    min = max_0, max = min_0, mean = 0;
+    /*min = max_0, max = min_0, mean = 0;
     means(min, max, mean, res_t3, res_fft);
     res(ct, 3) = min;
     res(ct, 4) = max;
@@ -48,7 +48,7 @@ int main() {
     means(min, max, mean, res_t4, res_fft);
     res(ct, 6) = min;
     res(ct, 7) = max;
-    res(ct, 8) = mean;
+    res(ct, 8) = mean;*/
     ct++;
   }
 

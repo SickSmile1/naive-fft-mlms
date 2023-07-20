@@ -184,7 +184,6 @@ void old_correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
 void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
     double fineSize, double halfSize) {
   int ts = t;
-  std::cout << "mc even: " << mc <<std::endl;
   for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
       // cC(i+mc, j+mc) = 0;
