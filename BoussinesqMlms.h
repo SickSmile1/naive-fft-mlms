@@ -48,9 +48,7 @@ void prepareCoarseSizes(std::vector<std::size_t> &gridLen1, // NOLINT
                 const std::size_t shape,
                 const std::size_t t);
 
-
-bool boundaryCheck(matrix &m, int i, int j); // NOLINT
-bool boundaryCheck(const matrix &m, int i, int j); // NOLINT
+bool bCheck(int b, int i, int j);
 
 void correctionSteps(matrix& cC, const matrix& st, int mc, // NOLINT
                     int t, double fineSize, double halfSize);

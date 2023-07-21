@@ -1,7 +1,9 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 #include "BoussinesqMlms.h"
 #include "Boussinesq.h"
-
+#include <algorithm>
+#include <string>
+#include <vector>
 
 // __________________________________________________________________
 matrix initializeStylusArray(int t) { // NOLINT
@@ -37,73 +39,11 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
     matrix temp({q, q});
     pfVec.push_back(temp);
     cDVec.push_back(temp);
-    // qs.push_back(q);
   }
 }
 
 // __________________________________________________________________
 void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
-                        const matrix& st) {
-  int t = st.shape[0]/2;
-  for (int level = 0; level <= pFVec.size()-2; level++) {
-    matrix &pC = pFVec[level+1];
-    for (int m = 0; m < pC.shape[0]; m++) {
-      for (int n = 0; n < pC.shape[1]; n++) {
-        // establish bigger boundaries to interpolate pressure on the
-        // edges of the grid
-        int i = 2*(m-t+1);
-        int j = 2*(n-t+1);
-        // determine loop boundaries to avoid boundary checks
-        int lb_i = 1, lb_j =1;
-        int ub_i = 2*t, ub_j = 2*t;
-        if (i < 2*t) {
-          lb_i = t*2-m;
-        }
-        if (i > (pFVec[level].shape[0]-2*t)) {
-          ub_i = (pC.shape[0]-m);
-        }
-        if (j < 2*t) {
-          lb_j = t*2-m;
-        }
-        if (j > (pFVec[level].shape[0]-2*t)) {
-          ub_j = (pC.shape[0]-n);
-        }
-        // interpolate pressure for m, n from i, j of coarse pressure
-        // array
-        pC(m, n) = 0;
-        double res = 0;
-        if (!boundaryCheck(pFVec[level], i, j)) {
-          res += 0;
-        } else {
-          res += pFVec[level](i, j);
-        }
-        if ((j > 0)&(j < pFVec[level].shape[0])) {
-          for (int k = lb_i; k <= ub_i; k++) {
-            int pi = i+2*(k-t)-1;
-            res += st(k-1, 0)*pFVec[level](pi, j);
-          }
-        }
-        if ((i > 0) & (i < pFVec[level].shape[1])) {
-          for (int k = lb_j; k <= ub_j; k++) {
-            int pj = j+2*(k-t)-1;
-            res += st(k-1, 0)*pFVec[level](i, pj);
-          }
-        }
-        for (int k = lb_i; k <= ub_i; k++) {
-          for (int l = lb_j; l <= ub_j; l++) {
-            int pi = i+2*(k-t)-1;
-            int pj = j+2*(l-t)-1;
-            res += st(k-1, 0)*st(l-1,0)*pFVec[level](pi, pj);
-          }
-        }
-        pC(m, n) = res; // i+2*(1-t)-1;
-      }
-    }
-  }
-}
-
-// __________________________________________________________________
-void old_calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
                         const matrix& st) {
   int t = st.shape[0]/2;
   for (int level = 0; level <= pFVec.size()-2; level++) {
@@ -152,32 +92,9 @@ bool boundaryCheck(matrix &m, int i, int j) { // NOLINT
 }
 
 // __________________________________________________________________
-void old_correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
-    double fineSize, double halfSize) {
-  int ts = t;
-  for (int i = -mc; i <= mc; i++) {
-    for (int j = -mc; j <= mc; j++) {
-      cC(i+mc, j+mc) = 0;
-      bool iEven = (i%2) == 0;
-      bool jEven = (j%2) == 0;
-      double res1 = 0, res2 = 0, res3 = 0;
-      double K = calcBoussinesq(i, j, halfSize, halfSize, fineSize, fineSize);
-      for (int k = 1; k <= 2*t; k++) {
-        res1 += st(k-1, 0) * calcBoussinesq(i-2*(k-ts)+1, j, 
-                    halfSize, halfSize, fineSize, fineSize);
-        res2 += st(k-1, 0) * calcBoussinesq(i, j-2*(k-ts)+1,
-                    halfSize, halfSize, fineSize, fineSize);
-        for (int l = 1; l <= 2*t; l++) {
-          res3 += st(k-1, 0)*st(l-1, 0) * 
-            calcBoussinesq(i-2*(k-ts)+1, j-2*(l-ts)+1, halfSize,
-            halfSize, fineSize, fineSize);
-        }
-      }
-      cC(i+mc, j+mc) += ((!iEven)&jEven)*(K-res1);
-      cC(i+mc, j+mc) += (iEven&(!jEven))*(K-res2);
-      cC(i+mc, j+mc) += ((!iEven)&(!jEven))*(K-res3);
-    }
-  }
+bool bCheck(int b, int i, int j) { // NOLINT
+  bool res = (i < b) & (j < b) & (i >= 0) & (j >= 0);
+  return res;
 }
 
 // __________________________________________________________________
@@ -186,7 +103,7 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
   int ts = t;
   for (int i = -mc; i <= mc; i++) {
     for (int j = -mc; j <= mc; j++) {
-      // cC(i+mc, j+mc) = 0;
+      cC(i+mc, j+mc) = 0;
       bool iEven = (i%2) == 0;
       bool jEven = (j%2) == 0;
       double res1 = 0, res2 = 0, res3 = 0;
@@ -208,16 +125,17 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
       } else if (!iEven && !jEven) {
         for (int k = 1; k <= 2*t; k++) {
           for (int l = 1; l <= 2*t; l++) {
-            res3 += st(k-1, 0)*st(l-1, 0) * 
+            res3 += st(k-1, 0)*st(l-1, 0) *
               calcBoussinesq(i-2*(k-ts)+1, j-2*(l-ts)+1, halfSize,
               halfSize, fineSize, fineSize);
           }
         }
-        cC(i+mc, j+mc) += K-res3; 
+        cC(i+mc, j+mc) += K-res3;
       }
     }
   }
 }
+
 
 // __________________________________________________________________
 void applyCorrection(matrix &cD, const matrix cC, // NOLINT
@@ -236,11 +154,12 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
     int i, int j, int mc) {
   // int mc = (cC.shape[0]-1)/2;
   double res = 0;
+  int bound = Ip.shape[0];
   for (int k = -mc; k <= mc; k++) {
     for (int l = -mc; l <= mc; l++) {
       int pi = 2*(i-t+1)-k;
       int pj = 2*(j-t+1)-l;
-      if (boundaryCheck(Ip, pi, pj)) {
+      if (bCheck(bound, pi, pj)) {
         res += cC(k+mc, l+mc) * Ip(pi, pj);
       }
     }
@@ -250,7 +169,7 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
 
 // __________________________________________________________________
 void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
-  int t = st.shape[0]/2;
+  /*int t = st.shape[0]/2;
   int shape = fD.shape[0]-1;
   int evenGrid = (shape%2) == 0;
   if (evenGrid) shape -= 1;
@@ -289,12 +208,10 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
         fD(shape, i+1) += (st(k-1, 0) * cD(m, pn_1));
       }
     }
-  }
-}
+  }*/
 
-// __________________________________________________________________
-void old_interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
   int t = st.shape[0]/2;
+  int bound = cD.shape[0];
   for (int i = 0; i < fD.shape[0]; i++) {
     for (int j = 0; j < fD.shape[1]; j++) {
       bool iEven = (i%2) == 0;
@@ -306,18 +223,18 @@ void old_interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLI
           int n = (j + 1) / 2 + t - 1;
           int pm = m+k-t-1;
           int pn = n+l-t-1;
-          if ((!iEven)&jEven & (boundaryCheck(cD, pm, n))) {
+          if ((!iEven)&jEven & (bCheck(bound, pm, n))) {
             fD(i, j) += st(k-1, 0) * cD(pm, n) *(l == 1);
           }
-          if (iEven&(!jEven) & (boundaryCheck(cD, m, pn))) {
+          if (iEven&(!jEven) & (bCheck(bound, m, pn))) {
             fD(i, j) += (st(l-1, 0) * cD(m, pn)) * once;
-          } else if ((!iEven)&(!jEven) & (boundaryCheck(cD, pm, pn))) {
+          } else if ((!iEven)&(!jEven) & (bCheck(bound, pm, pn))) {
             fD(i, j) += st(k-1, 0) * st(l-1, 0) * cD(pm, pn);
           }
         }
         once = false;
       }
-      if (boundaryCheck(cD, (i+1)/2+t-1, (j+1)/2+t-1)) {
+      if (bCheck(bound, (i+1)/2+t-1, (j+1)/2+t-1)) {
         fD(i, j) += (iEven&jEven)*cD((i+1)/2+t-1, (j+1)/2+t-1);
       }
     }
@@ -329,58 +246,7 @@ void secondCorrectionStep(const matrix& st,
                           double hS, const matrix& pF, matrix& cD, // NOLINT
                           const std::vector<matrix> &cCVec, int mc) {
   int shape = cD.shape[0];
-  bool evenGrid = false;
-  if ((shape%2) == 1) {
-    shape -= 1;
-    evenGrid = true;
-  }
-  int t = st.shape[0]/2;
-  for (int i = 0; i < shape; i+=2) {
-    for (int j = 0; j < shape; j+=2) {
-      double oddi = 0, oddj = 0, oddij = 0;
-      for (int k = -mc; k <= mc; k++) {
-        for (int l = -mc; l <= mc; l++) {
-          int pi = i-k;
-          int pj = j-l;
-          if (boundaryCheck(pF, pi+1, pj+1)) {
-            oddij += cCVec[2](k+mc, l+mc)*pF(pi+1, pj+1);
-          }
-          if (boundaryCheck(pF, pi, pj+1)) {
-            oddj += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
-          }
-          if (boundaryCheck(pF, pi+1, pj)) {
-            oddi += cCVec[0](k+mc, l+mc)*pF(pi+1, pj);
-          }
-        }
-      }
-      cD(i+1, j) += oddi;
-      cD(i, j+1) += oddj;
-      cD(i+1, j+1) += oddij;
-    }
-  }
-  if (evenGrid) {
-    for (int j = 0; j < shape; j+=2) {
-      // std:: cout << "i:" << shape << " j:" << j << std::endl;
-      for (int k = -mc; k <= mc; k++) {
-        for (int l = -mc; l <= mc; l++) {
-          int pi = shape-k;
-          int pj = j-l;
-          if (boundaryCheck(pF, pi, pj+1)) {
-            cD(shape, j+1) += cCVec[1](k+mc, l+mc)*pF(pi, pj+1);
-          }
-        }
-      }
-    }
-  }
-}
-
-// __________________________________________________________________
-void old_secondCorrectionStep(const matrix& st,
-                          double hS, const matrix& pF, matrix& cD, // NOLINT
-                          const std::vector<matrix> &cCVec, int mc) {
-  // int mc = st.shape[0];
-  int t = st.shape[0]/2;
-  int shape = cD.shape[0];
+  int bound = pF.shape[0];
   for (int i = 0; i < shape; i++) {
     for (int j = 0; j < shape; j++) {
       double correction = 0;
@@ -391,7 +257,7 @@ void old_secondCorrectionStep(const matrix& st,
         for (int l = -mc; l <= mc; l++) {
           int pi = i-k;
           int pj = j-l;
-          if (boundaryCheck(pF, pi, pj)){
+          if (bCheck(bound, pi, pj)){
             correction += ((!iEven)&jEven) * cCVec[0](k+mc, l+mc)*pF(pi, pj);
             correction += (iEven&(!jEven)) *  cCVec[1](k+mc, l+mc)*pF(pi, pj);
             correction += ((!iEven)&(!jEven)) *  cCVec[2](k+mc, l+mc)*pF(pi, pj);
@@ -409,7 +275,7 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
                             double fineSize, int mc) {
   int t = st.shape[0]/2;
-  int tempMc = 2*(mc)+2;
+  int tempMc = 2*mc+2;
   matrix cC2({tempMc, tempMc});
   matrix cC3({tempMc, tempMc});
   matrix cC4({tempMc, tempMc});
@@ -437,3 +303,54 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
   cCVec.push_back(cC3);
   cCVec.push_back(cC4);
 }
+
+// __________________________________________________________________
+matrix BoussinesqMlms(double size, int grid1, int t) {
+  // const double size = 2;
+  // const double size_p = 1;
+  const double pressure = 1.;
+
+  double size_p = size/2;
+
+  double fineSizeA = size / grid1;
+
+  matrix kM({grid1, grid1});
+  matrix Ip({grid1, grid1});
+
+  double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
+  double upper_b = (grid1)/2. + (size_p/fineSizeA)/2.;
+
+  initializePressureArray(Ip, lower_b, upper_b, pressure);
+
+  // int t = 4;
+  int mc = std::max(0.7*t*std::pow(grid1,1./t)-1, t*1.);
+
+  matrix st = initializeStylusArray(t);
+
+  std::vector<matrix> pfVec;
+  std::vector<matrix> cDVec;
+
+  initializeStack(st, t, Ip, kM, pfVec, cDVec);
+  double d = pfVec.size()-1;
+
+  double coarseSize = fineSizeA*pow(2, d);
+  std::vector<matrix> cCVec;
+
+  calcCoarsePressure(pfVec, st);
+  calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
+  for (int i = 0; i < pfVec.size()-1; i++) {
+    double hS = fineSizeA*pow(2, d-i-1);
+    int temp_mc = (mc*2)+1;
+    matrix cC({temp_mc, temp_mc});
+    correctionSteps(cC, st, mc, t, fineSizeA, hS);
+    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
+    interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
+    cCVec.reserve(3);
+    createCorrectionArrays(cCVec, st, hS, fineSizeA, mc);
+    secondCorrectionStep(st, hS,
+                         pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
+  }
+  return cDVec[0];
+}
+
+

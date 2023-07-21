@@ -115,50 +115,7 @@ static void Naive(benchmark::State &state) {
   }
 }
 
-BENCHMARK(Naive)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
-
-/*void MlmsLoop2(size_t grid) {
-  double size = 2;
-  double size_p = 1;
-  double pressure = 1.;
-  int grids = grid;
-  double fineSize = size / grids;
-  matrix kM({grids, grids});
-  matrix Ip({grids, grids});
-  double lower_b = (grids)/2. - (size_p/fineSize)/2.;
-  double upper_b = (grids)/2. + (size_p/fineSize)/2.;
-  initializePressureArray(Ip, lower_b, upper_b, pressure);
-  int t = 0.84*log(grids);
-  int mc = std::max(0.7*t*std::pow(grids,1./t)-1,t*1.);
-  std::vector<matrix> pfVec, cDVec, cCVec;
-  matrix st = initializeStylusArray(t);
-  initializeStack(st, t, Ip, kM, pfVec, cDVec);
-  double coarseSize = fineSize*pow(2, pfVec.size()-1);
-  cCVec.reserve(3);
-  createCorrectionArrays(cCVec, st, coarseSize, fineSize, mc);
-  old_calcCoarsePressure(pfVec, st);
-  int d = pfVec.size()-1;
-  calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  for (int i = 0; i < pfVec.size()-1; i++) {
-    double hS = fineSize*pow(2, d-i-1);
-    int temp_mc = (mc*2)+1;
-    matrix cC({temp_mc, temp_mc});
-    old_correctionSteps(cC, st, mc, t, fineSize, hS);
-    applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
-    old_interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    old_secondCorrectionStep(st, hS,
-                          pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
-  }
-}
-
-static void Mlms2(benchmark::State &state) {
-  for (auto _ : state) {
-      MlmsLoop2(state.range(0));
-  }
-}
-
-BENCHMARK(Mlms2)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);*/
-
+// BENCHMARK(Naive)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
 
 void MlmsLoop1(size_t grid) {
   double size = 2;
@@ -201,7 +158,7 @@ static void Mlms1(benchmark::State &state) {
   }
 }
 
-BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond);
+BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<8)->Unit(benchmark::kMillisecond);
 
 void FftLoop(size_t grids) {
   double Lx = 2., Ly = 2.;
@@ -246,6 +203,6 @@ static void FFT(benchmark::State &state) {
   }
 }
 
-BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond);
+BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<8)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

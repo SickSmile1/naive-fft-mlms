@@ -4,7 +4,7 @@
 // #include "./MlmsTimer.h"
 #include "./BoussinesqMlms.h"
 #include "./BoussinesqFft.h"
-#include "bench/Boussinesq.h"
+#include "./Boussinesq.h"
 
 int main() {
   // initial size and pressure values
@@ -22,12 +22,13 @@ int main() {
         res1 += temp;
       }
     }
-    mean = std::sqrt(res1);
+    double n = ((v1.shape[0]-1),2);
+    mean = std::sqrt(res1/n);
   };
 
-  matrix res({10, 3});
+  matrix res({9, 3});
   int ct = 0;
-  for (int i = 8; i < 4100; i*=2) {
+  for (int i = 8; i < 2100; i*=2) {
     matrix res_t2 = BoussinesqMlms(2., i, 0.84*log(i));
     //matrix res_t3 = BoussinesqMlms(2., i, 3);
     // matrix res_t4 = BoussinesqMlms(2., i, 4);
@@ -55,7 +56,7 @@ int main() {
   // matrix res_t2 = BoussinesqMlms(2., 512, 2);
   // writeToFile(res_t2, "results/res_mlms2048");
   // writeToFile(BoussinesqFFT(2.,2048), "results/res_fft3");
-  writeToFile(res, "results/res_l2");
+  writeToFile(res, "results/res_l2_corr");
   return 0;
 }
 

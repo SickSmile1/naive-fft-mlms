@@ -58,6 +58,6 @@ static void Mlms(benchmark::State &state) {
   state.SetComplexityN(state.range(0));
 }
 
-BENCHMARK(Mlms)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond)->Complexity();
+BENCHMARK(Mlms)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond)->Complexity();
 
 BENCHMARK_MAIN();

@@ -1,10 +1,8 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
-#include <fftw3.h>
+// #include <fftw3.h>
 #include <fstream>
 #include <iostream>
 #include <cmath>
-// #include <vector>
-// #include <complex>
 #include "./Boussinesq.h"
 
 // __________________________________________________________________

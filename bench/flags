@@ -1,8 +1,0 @@
--O3
--std=c++17
--Wall
--fno-rtti
--fno-exceptions
--pedantic
--pthreads
--fno-omit-frame-pointer
