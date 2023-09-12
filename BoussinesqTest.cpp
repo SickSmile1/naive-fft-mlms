@@ -26,7 +26,7 @@ TEST(BoussinesqNaive, calculate) {
   // GTEST_SKIP();
   // test for symmetry of resulting matrix
   double size = 2;
-  double size_p = 1;
+  double size_p = size/2;
   int grid = grids;
   double cell_size = size/grid;
 
@@ -66,6 +66,7 @@ TEST(BoussinesqTimer, timeTest) {
   EXPECT_GE(stopped, 1);
 }
 
+
 TEST(WriteToFile, writeToFile) {
   // write/read file and check if values match
   matrix test({3, 3});
@@ -101,16 +102,17 @@ TEST(WriteToFile, writeToFile) {
   ASSERT_EQ(test(2, 2), res2);
 }
 
-TEST(Boussinesq, boundaryCheck) {
-  matrix m({2, 2});
-  EXPECT_TRUE(boundaryCheck(m, 1, 1));
-  EXPECT_TRUE(boundaryCheck(m, 1, 0));
-  EXPECT_TRUE(boundaryCheck(m, 0, 1));
-  EXPECT_TRUE(boundaryCheck(m, 0, 0));
-  EXPECT_FALSE(boundaryCheck(m, -1, 0));
-  EXPECT_FALSE(boundaryCheck(m, 1, -1));
-  EXPECT_FALSE(boundaryCheck(m, 3, 0));
-  EXPECT_FALSE(boundaryCheck(m, 0, 3));
+TEST(Boussinesq, bCheck) {
+  matrix ms({2, 2});
+  int m = ms.shape[0];
+  EXPECT_TRUE(bCheck(m, 1, 1));
+  EXPECT_TRUE(bCheck(m, 1, 0));
+  EXPECT_TRUE(bCheck(m, 0, 1));
+  EXPECT_TRUE(bCheck(m, 0, 0));
+  EXPECT_FALSE(bCheck(m, -1, 0));
+  EXPECT_FALSE(bCheck(m, 1, -1));
+  EXPECT_FALSE(bCheck(m, 3, 0));
+  EXPECT_FALSE(bCheck(m, 0, 3));
 }
 
 TEST(BoussinesqMlms, initializeStylusArray) {

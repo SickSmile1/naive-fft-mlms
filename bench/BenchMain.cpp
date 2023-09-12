@@ -119,7 +119,7 @@ static void Naive(benchmark::State &state) {
 
 void MlmsLoop1(size_t grid) {
   double size = 2;
-  double size_p = 1;
+  double size_p = .5;
   double pressure = 1.;
   int grids = grid+1;
   double fineSize = size / grids;
@@ -158,12 +158,12 @@ static void Mlms1(benchmark::State &state) {
   }
 }
 
-BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<8)->Unit(benchmark::kMillisecond);
+BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond);
 
 void FftLoop(size_t grids) {
   double Lx = 2., Ly = 2.;
   int Nx = grids+1, Ny = grids+1;
-  double pSize = 1;
+  double pSize = .5;
   double dx = (Lx/Nx);
   double dy = (Ly/Ny);
 
@@ -203,6 +203,7 @@ static void FFT(benchmark::State &state) {
   }
 }
 
-BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<8)->Unit(benchmark::kMillisecond);
+BENCHMARK(FFT)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond);
+// BENCHMARK(FFT)->RangeMultiplier(2)->DenseRange(300, 400,1)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

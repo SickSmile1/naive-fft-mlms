@@ -63,8 +63,10 @@ void calc_displacement(const matrix &pF, double cS, double fS,
       // inner loop
       for (int k = 0; k < shape; ++k) {
         for (int l = 0; l < shape; ++l) {
-          cD(i, j) += calcBoussinesq(i-k, j-l,  cS, cS,
-                          fS, fS)*pF(k, l);
+          if(pF(k, l)!=0) {
+            cD(i, j) += calcBoussinesq(i-k, j-l,  cS, cS,
+              fS, fS)*pF(k, l);
+          }
         }
       }
     }

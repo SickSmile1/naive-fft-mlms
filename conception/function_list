@@ -1,8 +1,0 @@
-initializePressureArray
-initializeDisplacementArray
-calculation_loop
-calc_displacement
-calculate
-printarray
-MeasureTime
-writeToFile

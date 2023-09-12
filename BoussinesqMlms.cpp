@@ -28,7 +28,7 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
   const int grid = kM.shape[0];
   pfVec.push_back(Ip);
   cDVec.push_back(kM);
-  double qLevel = std::log2(grid * grid)/2-1;
+  double qLevel = std::ceil(std::log2(grid * grid)/4);
   int q;
   for (int length = 0; length < qLevel-1; length++) {
     if (length == 0) {
@@ -65,13 +65,13 @@ void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
           int pj2 = j+2*(k-t)-1;
           for (int l = 1; l <= 2*t; l++) {
             int pj = j+2*(l-t)-1;
-            res += bCheck(bound, pi, pj) ?
+            res += (bCheck(bound, pi, pj) && pFVec[level](pi, pj)!=0) ?
                     st(k-1, 0)*st(l-1, 0)*pFVec[level](pi, pj) : 0;
           }
-          if (bCheck(bound, pi, j)) {
+          if (bCheck(bound, pi, j) && pFVec[level](pi, j)!=0) {
             res += st(k-1, 0)*pFVec[level](pi, j);
           }
-          res += (bCheck(bound, i, pj2)) ?
+          res += (bCheck(bound, i, pj2) && pFVec[level](i, pj2) != 0) ?
                   st(k-1, 0)*pFVec[level](i, pj2): 0;
         }
         pC(m, n) = res;
@@ -150,7 +150,9 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
       int pi = 2*(i-t+1)-k;
       int pj = 2*(j-t+1)-l;
       if (bCheck(bound, pi, pj)) {
-        res += cC(k+mc, l+mc) * Ip(pi, pj);
+        if(Ip(pi, pj)!=0) {
+          res += cC(k+mc, l+mc) * Ip(pi, pj);
+        }
       }
     }
   }
@@ -207,9 +209,11 @@ void secondCorrectionStep(const matrix& st,
           int pi = i-k;
           int pj = j-l;
           if (bCheck(bound, pi, pj)){
-            correction += ((!iEven)&jEven) * cCVec[0](k+mc, l+mc)*pF(pi, pj);
-            correction += (iEven&(!jEven)) *  cCVec[1](k+mc, l+mc)*pF(pi, pj);
-            correction += ((!iEven)&(!jEven)) *  cCVec[2](k+mc, l+mc)*pF(pi, pj);
+            if (pF(pi,pj)!=0) {
+              correction += ((!iEven)&jEven) * cCVec[0](k+mc, l+mc)*pF(pi, pj);
+              correction += (iEven&(!jEven)) *  cCVec[1](k+mc, l+mc)*pF(pi, pj);
+              correction += ((!iEven)&(!jEven)) *  cCVec[2](k+mc, l+mc)*pF(pi, pj);
+            }
           }
         }
       }
@@ -263,7 +267,9 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
 
   double fineSizeA = size / grid1;
 
+  // result array
   matrix kM({grid1, grid1});
+  // pressure array
   matrix Ip({grid1, grid1});
 
   double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
@@ -276,19 +282,23 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
 
   matrix st = initializeStylusArray(t);
 
+  // vectors of different grid sizes for pressure->pfVec / displacement -> cDvec
   std::vector<matrix> pfVec;
   std::vector<matrix> cDVec;
 
+  // fill vectors with empty arrays for different grid sizes before calculation
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
   double d = pfVec.size()-1;
 
+  // std::cout << "grid: " << pfVec[d-1].shape[0] << " grid2: " << pfVec[1].shape[0] << std::endl;
+
   double coarseSize = fineSizeA*pow(2, d);
   std::vector<matrix> cCVec;
-
   calcCoarsePressure(pfVec, st);
   calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
   for (int i = 0; i < pfVec.size()-1; i++) {
     double hS = fineSizeA*pow(2, d-i-1);
+    // std::cout << hS <<std::endl;
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     correctionSteps(cC, st, mc, t, fineSizeA, hS);
@@ -298,6 +308,7 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
     createCorrectionArrays(cCVec, st, hS, fineSizeA, mc);
     secondCorrectionStep(st, hS,
                          pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
+    // writeToFile(cDVec[d-i-1], "results/partial_"+std::to_string(int(d-i-1)));
   }
   return cDVec[0];
 }
