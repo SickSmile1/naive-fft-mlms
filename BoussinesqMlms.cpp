@@ -261,11 +261,11 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
 matrix BoussinesqMlms(double size, int grid1, int t) {
   // const double size = 2;
   // const double size_p = 1;
-  const double pressure = 1.;
+  const double pressure{1.};
 
-  double size_p = size/2;
+  double size_p{size/2};
 
-  double fineSizeA = size / grid1;
+  double fineSizeA{size / grid1};
 
   // result array
   matrix kM({grid1, grid1});
@@ -288,11 +288,11 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
 
   // fill vectors with empty arrays for different grid sizes before calculation
   initializeStack(st, t, Ip, kM, pfVec, cDVec);
-  double d = pfVec.size()-1;
+  double d{pfVec.size()-1.};
 
   // std::cout << "grid: " << pfVec[d-1].shape[0] << " grid2: " << pfVec[1].shape[0] << std::endl;
 
-  double coarseSize = fineSizeA*pow(2, d);
+  double coarseSize{fineSizeA*pow(2, d)};
   std::vector<matrix> cCVec;
   calcCoarsePressure(pfVec, st);
   calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);

@@ -118,12 +118,13 @@ static void Naive(benchmark::State &state) {
 // BENCHMARK(Naive)->RangeMultiplier(2)->Range(8, 8<<6)->Unit(benchmark::kMillisecond);
 
 void MlmsLoop1(size_t grid) {
-  double size = 2;
-  double size_p = .5;
-  double pressure = 1.;
+  double size{2};
+  double size_p{.5};
+  double pressure{1.};
   int grids = grid+1;
-  double fineSize = size / grids;
+  double fineSize{size / grids};
   matrix kM({grids, grids});
+  std::cout << kM.shape[1] <<std::endl;
   matrix Ip({grids, grids});
   double lower_b = (grids)/2. - (size_p/fineSize)/2.;
   double upper_b = (grids)/2. + (size_p/fineSize)/2.;
@@ -139,8 +140,9 @@ void MlmsLoop1(size_t grid) {
   createCorrectionArrays(cCVec, st, coarseSize, fineSize, mc);
   calcCoarsePressure(pfVec, st);
   int d = pfVec.size()-1;
+  std::cout<<t<<" "<<mc<<" "<<d<<" "<<pfVec[d].shape[0]<<" "<<pfVec[1].shape[0]<<std::endl;
   calc_displacement(pfVec[d], coarseSize, fineSize, cDVec[d]);
-  for (int i = 0; i < pfVec.size()-1; i++) {
+  for (int i = 0; i < d; i++) {
     double hS = fineSize*pow(2, d-i-1);
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
@@ -158,7 +160,7 @@ static void Mlms1(benchmark::State &state) {
   }
 }
 
-BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<9)->Unit(benchmark::kMillisecond);
+BENCHMARK(Mlms1)->RangeMultiplier(2)->Range(8, 8<<10)->Unit(benchmark::kMillisecond)->Iterations(1);
 
 void FftLoop(size_t grids) {
   double Lx = 2., Ly = 2.;
