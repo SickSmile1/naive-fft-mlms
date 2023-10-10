@@ -25,7 +25,7 @@ int main() {
 
   matrix res({9, 3});
   int ct = 0;
-  for (int i = 2048; i < 2200; i*=2) {
+  for (int i = 1024; i < 1200; i*=2) {
     // replace 0.84*log(i) for constant t
     matrix res_t2 = BoussinesqMlms(2., i, 0.84*log(i));
     
