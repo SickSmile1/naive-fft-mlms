@@ -26,10 +26,14 @@
 *.a
 *.lib
 
-# Config for ide
-.idea*
-
 # Executables
 *.exe
 *.out
 *.app
+
+# cache/build
+build/
+.cache
+
+# meson
+subprojects/*
