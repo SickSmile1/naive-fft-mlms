@@ -8,7 +8,7 @@
 #include "Boussinesq.h"
 #include "BoussinesqMlms.h"
 #include "BoussinesqFft.h"
-// #include "BoussinesqTimer.h"
+#include "BoussinesqTimer.h"
 
 
 /*TEST(filename, function){
@@ -59,12 +59,12 @@ TEST(BoussinesqNaive, calculate) {
   EXPECT_TRUE(equal);
 }
 
-/*TEST(BoussinesqTimer, timeTest) {
+TEST(BoussinesqTimer, timeTest) {
   MeasureTime mt = MeasureTime();
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   auto stopped =  mt.stopTime();
   EXPECT_GE(stopped, 1);
-}*/
+}
 
 
 TEST(WriteToFile, writeToFile) {
