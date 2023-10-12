@@ -5,6 +5,7 @@
 <p>FFTW3 <br>
 Google Test Framework - https://github.com/google/googletest <br>
 Google Benchmark Framework - https://github.com/google/benchmark <br>
+python3 <br>
 </p>
 
 <p>Note: Google Test and Benchmark Framework are available from: <br>
@@ -16,12 +17,20 @@ Google Benchmark Framework - https://github.com/google/benchmark <br>
 
 # Makefile #
 
+By default, a call to <b>make</b> in the root directory of the repo is sufficient. If Google Test and Benchmark are not installed, the call can be modified to <b>make compile</b> to skip the tests.
+
 ## Options ## 
 <p>
-make all - compiles all and calls Tests and Valgrind with cachegrind (further installations are necessary - https://valgrind.org/)
+  <ul>
+    <li>make all - compiles all and calls Tests and Valgrind with cachegrind (further installations are necessary - https://valgrind.org/)</li>
+    <li>make compile - skip tests and valgrind </li>
+    <li>make test - run tests only</li>
+    <li>make valgrind - </li>
+    <li>make clean - clean *.o files and other residue from compilation </li>
+    <li>make checkstyle - run static checker cpplint for project</li>
+  </ul>
 </p>
 
-By default, a call to <b>make</b> in the root directory of the repo is sufficient. If Google Test and Benchmark are not installed, the call can be modified to <b>make compile</b> to skip the tests.
 
 # Bench #
 
