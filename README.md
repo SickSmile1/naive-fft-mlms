@@ -16,7 +16,8 @@ Google Benchmark Framework - https://github.com/google/benchmark <br>
 
 # Makefile #
 
-<p> ## Options ## 
+## Options ## 
+<p>
 make all - compiles all and calls Tests and Valgrind with cachegrind (further installations are necessary - https://valgrind.org/)
 </p>
 
