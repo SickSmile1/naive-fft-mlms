@@ -3,7 +3,7 @@
 # Requirements #
 
 <p>FFTW3 <br>
-Google Test Framework - <a href="https://github.com/google/googletest"> </a>a></a><br>
+Google Test Framework - <a href="https://github.com/google/googletest"> </a><br>
 Google Benchmark Framework - <a href="https://github.com/google/benchmark"></a> <br>
 </p>
 
