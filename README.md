@@ -33,5 +33,5 @@ By default, a call to <b>make</b> in the root directory of the repo is sufficien
 </p>
 
 # Source of Algorithms #
-https://www.sciencedirect.com/science/article/abs/pii/S0043164899001131
+https://www.sciencedirect.com/science/article/abs/pii/S0043164899001131 <br>
 https://iopscience.iop.org/article/10.1088/2051-672X/ac860a/pdf
