@@ -4,11 +4,13 @@ MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
 TEST_BINARIES = $(basename $(wildcard *Test.cpp))
 HEADERS = $(wildcard *.h)
 OBJECTS = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard *.cpp))))
-LIBRARIES = -lfftw3 -lm 
+LIBRARIES = -lfftw3 -lm
+LIBRARIES2 = -isystem benchmark/include -Lbenchmark/home/sick/Documents/GIT/benchmark -lbenchmark -lpthread
+BENCHOBJECTS = BoussinesqFft.o BoussinesqMlms.o Boussinesq.o
 
 .PRECIOUS: %.o
 .SUFFIXES:
-.PHONY: all compile test checkstyke
+.PHONY: all compile test checkstyle bench
 
 all: compile test checkstyle
 
@@ -20,17 +22,22 @@ test: $(TEST_BINARIES)
 checkstyle:
 	python3 cpplint.py --repository=. *.h *.cpp
 
+bench:
+	$(CXX) -o $^ BenchMain bench/BenchMain.cpp $(BENCHOBJECTS) $(LIBRARIES) $(LIBRARIES2)
+
 clean:
 	rm -f *.o
 	rm -f $(MAIN_BINARIES)
 	rm -f $(TEST_BINARIES)
 	rm -f *.plain
+	rm -f bench/BenchMain.o BenchMain
 
 %Main: %Main.o $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBRARIES)
 
 %Test: %Test.o $(OBJECTS)
 	$(CXX) -o $@ $^ $(LIBRARIES) -lgtest -lgtest_main -lpthread
+
 
 %.o: %.cpp $(HEADERS)
 	$(CXX) -c $<

@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
-#include "Boussinesq.h"
-#include "BoussinesqFft.h"
-#include "BoussinesqMlms.h"
+#include "../Boussinesq.h"
+#include "../BoussinesqFft.h"
+#include "../BoussinesqMlms.h"
 #include <iostream>
 #include <cmath>
 #include <fftw3.h>
