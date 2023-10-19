@@ -5,8 +5,8 @@
 
 // __________________________________________________________________
 void copyPressureArray(matrix& p, const matrix& tempP) {// NOLINT 
-  for (int i = 0; i < tempP.shape[0]; i++) {
-    for (int j = 0; j < tempP.shape[1]; j++) {
+  for (int i = 0; i < tempP.rows(); i++) {
+    for (int j = 0; j < tempP.cols(); j++) {
       p(i, j) = tempP(i, j);
     }
   }
@@ -14,7 +14,7 @@ void copyPressureArray(matrix& p, const matrix& tempP) {// NOLINT
 
 // __________________________________________________________________
 void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
-  int shape = (Gmn.shape[0])/2;
+  int shape = (Gmn.rows())/2;
   for (int i = 0; i <= shape; i++) {
     double res = calcBoussinesq(i, 0, dx, dy, dx, dy);
     Gmn(i, 0) = res;
@@ -38,14 +38,14 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
 // __________________________________________________________________
 void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
                   matrix& p, cMatrix& p_tild) { // NOLINT
-  fftw_plan p1;
-  p1 = fftw_plan_dft_r2c_2d(Gmn.shape[0], Gmn.shape[1], Gmn.data.data(),
-      reinterpret_cast<fftw_complex*>(Gmn_tild.data.data()), FFTW_ESTIMATE);
+  fftw_plan p1; // TODO: reuse plan? use inplace array
+  p1 = fftw_plan_dft_r2c_2d(Gmn.rows(), Gmn.cols(), Gmn.data(),
+      reinterpret_cast<fftw_complex*>(Gmn_tild.data()), FFTW_ESTIMATE);
   // output array needs to be 2*nx / (ny*2/2)-1
 
   fftw_plan p2;
-  p2 = fftw_plan_dft_r2c_2d(p.shape[0], p.shape[1], p.data.data(),
-      reinterpret_cast<fftw_complex*>(p_tild.data.data()), FFTW_ESTIMATE);
+  p2 = fftw_plan_dft_r2c_2d(p.rows(), p.cols(), p.data(),
+      reinterpret_cast<fftw_complex*>(p_tild.data()), FFTW_ESTIMATE);
 
   fftw_execute(p1);
   fftw_execute(p2);
@@ -56,11 +56,11 @@ void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
 
 // __________________________________________________________________
 void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
-  fftw_plan p3;
-  p3 = fftw_plan_dft_c2r_2d(Umn.shape[0], Umn.shape[1],
+  fftw_plan p3; // TODO: use in place array
+  p3 = fftw_plan_dft_c2r_2d(Umn.rows(), Umn.cols(),
                             reinterpret_cast<fftw_complex*>
-                            (Umn_tild.data.data()),
-                            Umn.data.data(), FFTW_ESTIMATE);
+                            (Umn_tild.data()),
+                            Umn.data(), FFTW_ESTIMATE);
   fftw_execute(p3);
   fftw_destroy_plan(p3);
 }
@@ -68,10 +68,11 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
 // __________________________________________________________________
 void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
                         int Nx, int Ny) { //NOLINT
-  for (int i = 0; i < Umn_res.shape[0]; i++) {
-    for (int j = 0; j < Umn_res.shape[1]; j++) {
+  for (int i = 0; i < Umn_res.rows(); i++) {
+    for (int j = 0; j < Umn_res.cols(); j++) {
       // devide each result by Nx*Ny
-      Umn_res(i, j) = Umn(i, j)/(Umn.shape[0]*Umn.shape[1]);
+      Umn_res(i, j) = Umn(i, j)/(Umn.rows()*Umn.cols()); 
+      // #TODO replace by simplified eigen operatiom
     }
   }
   // writeToFile(Umn_res, "whatthe");
@@ -80,11 +81,12 @@ void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
 // __________________________________________________________________
 void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
                         cMatrix& p_tild) { // NOLINT
-  for (int i = 0; i < Gmn_tild.shape[0]; i++) {
-    for (int j = 0; j < Gmn_tild.shape[1]; j++) {
+  /*for (int i = 0; i < Gmn_tild.rows(); i++) {
+    for (int j = 0; j < Gmn_tild.cols(); j++) {
       Umn_tild(i, j) = Gmn_tild(i, j)*p_tild(i, j);
     }
-  }
+  }*/
+  Umn_tild.array() = Gmn_tild.array() * p_tild.array();
 }
 
 
@@ -100,12 +102,12 @@ matrix BoussinesqFFT(double size, int grid) {
   int ub = Ny/2+(pSize/dy)/2;
 
   matrix Gmn({(2*Nx)-1, (2*Ny)-1});
-  cMatrix Gmn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
-  matrix p({Gmn.shape[0], Gmn.shape[1]});
-  cMatrix p_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  cMatrix Gmn_tild({Gmn.rows(), Gmn.cols()/2+1});
+  matrix p({Gmn.rows(), Gmn.cols()});
+  cMatrix p_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix tempP({Nx, Ny});
-  matrix Umn({Gmn.shape[0], Gmn.shape[1]});
-  cMatrix Umn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix Umn({Gmn.rows(), Gmn.cols()});
+  cMatrix Umn_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix Umn_res({Nx, Ny});
 
   initializePressureArray(tempP, lb, ub, 1.);

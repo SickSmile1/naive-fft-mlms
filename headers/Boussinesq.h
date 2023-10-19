@@ -12,72 +12,25 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-// #include <eigen3/Eigen/Dense>
-// #include<eigen3/Eigen/StdVector>
+#include <eigen3/Eigen/Core>
 
-template <class T>
-struct matrixTemplate{
-  // data container for pressure arrays, grid and result
-  std::array<int, 2> shape;
-  std::vector<T> data;
-
-  // constructor, to initialize simulated 2d array in a 1d shape
-  explicit matrixTemplate(std::array<int, 2> shape_) : shape(shape_) {
-    data.resize(shape[0]*shape[1]);
-  }
-  auto begin() {
-    return data.begin();
-  }
-
-  auto end() {
-    return data.end();
-  }
-  // overload () for aquiring (conversion) i,j idexes in 1d array
-  T& operator() (int i, int j) {
-    // assert(i < shape[0] && j < shape[1]);
-    return data[j+(i*shape[1])];
-  }
-
-  // overload () for aquiring (conversion) i,j indexes in 1d array
-  // in static form
-  const T& operator() (int i, int j) const {
-    // assert(i < shape[0] && j < shape[1]);
-    return data[j+(i*shape[1])];
-  }
-};
-
-using matrix = matrixTemplate<double>;
-using cMatrix = matrixTemplate<std::complex<double>>;
+using matrix = Eigen::MatrixXd;
+using cMatrix = Eigen::MatrixXcd;
 
 // printing function for the data container
-// void printarray(const matrixTemplate<T> &array);
 template <class T>
 // __________________________________________________________________
-void printarray(const matrixTemplate<T> &array) {
-  for (int i = 0; i < array.shape[0]; i++) {
-    for (int j = 0; j < array.shape[1]; j++) {
-      std::cout << " " <<  array(i, j) << " ";
-    }
-    std::cout << "\n";
-  }
+void printarray(const T &array) {
+  std::cout << array << std::endl;
   return;
 }
 
 template <class T>
 // __________________________________________________________________
-void writeToFile(const matrixTemplate<T> &arr, const std::string name) {
+void writeToFile(const T &arr, const std::string name) {
   std::ofstream file;
   file.open(name, std::ofstream::out | std::ofstream::trunc);
-  file << std::fixed << std::setprecision(8);
-  for (int i = 0; i < arr.shape[0]; i++) {
-    for (int j = 0; j < arr.shape[1]; j++) {
-      file << arr(i, j);
-      if(j < (arr.shape[1]-1)) {
-        file << "\t";
-      }
-    }
-    file << std::endl;
-  }
+  file << arr << std::endl;
   file.close();
 }
 

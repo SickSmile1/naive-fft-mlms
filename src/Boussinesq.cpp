@@ -18,8 +18,8 @@ void initializePressureArray(matrix &Pa, double lower_b, // NOLINT
 
 // __________________________________________________________________
 void initializeDisplacementArray(matrix &Ic) { // NOLINT
-  for (int i = 0; i < Ic.shape[0]; i++) {
-    for (int j = 0; j < Ic.shape[1]; j++) {
+  for (int i = 0; i < Ic.rows(); i++) {
+    for (int j = 0; j < Ic.cols(); j++) {
       Ic(i, j) = 0;
     }
   }
@@ -56,7 +56,7 @@ double calcBoussinesq(int i, int j, double dxc, double dyc,
 
 void calc_displacement(const matrix &pF, double cS, double fS,
                          matrix &cD) { // NOLINT
-  int shape = pF.shape[0];
+  int shape = pF.rows();
   // #pragma omp parallel for simd
   for (int i = 0; i < shape; ++i) {
     for (int j = 0; j < shape; ++j) {

@@ -25,7 +25,7 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
                     const matrix kM, // NOLINT
                     std::vector<matrix>& pfVec, // NOLINT
                     std::vector<matrix>& cDVec) { // NOLINT
-  const int grid = kM.shape[0];
+  const int grid = kM.rows();
   pfVec.push_back(Ip);
   cDVec.push_back(kM);
   double qLevel = std::ceil(std::log2(grid * grid)/4);
@@ -45,12 +45,12 @@ void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
 // __________________________________________________________________
 void calcCoarsePressure(std::vector<matrix>& pFVec, // NOLINT
                         const matrix& st) {
-  int t = st.shape[0]/2;
+  int t = st.rows()/2;
   for (int level = 0; level <= pFVec.size()-2; level++) {
     matrix &pC = pFVec[level+1];
-    int bound = pFVec[level].shape[0];
-    for (int m = 0; m < pC.shape[0]; m++) {
-      for (int n = 0; n < pC.shape[1]; n++) {
+    int bound = pFVec[level].rows();
+    for (int m = 0; m < pC.rows(); m++) {
+      for (int n = 0; n < pC.cols(); n++) {
         int i = 2*(m-t+1);
         int j = 2*(n-t+1);
         pC(m, n) = 0;
@@ -132,8 +132,8 @@ void applyCorrection(matrix &cD, const matrix cC, // NOLINT
                       const matrix Ip, // NOLINT
                       int t, int mc) {
   #pragma omp parallel for simd
-  for (int i = 0; i < cD.shape[0]; i++) {
-    for (int j = 0; j < cD.shape[1]; j++) {
+  for (int i = 0; i < cD.rows(); i++) {
+    for (int j = 0; j < cD.cols(); j++) {
       cD(i, j) += correctionHelper(cC, Ip, t, i, j, mc);
     }
   }
@@ -144,7 +144,7 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
     int i, int j, int mc) {
   // int mc = (cC.shape[0]-1)/2;
   double res = 0;
-  int bound = Ip.shape[0];
+  int bound = Ip.rows();
   for (int k = -mc; k <= mc; k++) {
     for (int l = -mc; l <= mc; l++) {
       int pi = 2*(i-t+1)-k;
@@ -161,10 +161,10 @@ double correctionHelper(const matrix& cC, const matrix& Ip, int t,
 
 // __________________________________________________________________
 void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
-  int t = st.shape[0]/2;
-  int bound = cD.shape[0];
-  for (int i = 0; i < fD.shape[0]; i++) {
-    for (int j = 0; j < fD.shape[1]; j++) {
+  int t = st.rows()/2;
+  int bound = cD.rows();
+  for (int i = 0; i < fD.rows(); i++) {
+    for (int j = 0; j < fD.cols(); j++) {
       bool iEven = (i%2) == 0;
       bool jEven = (j%2) == 0;
       bool once = true;
@@ -196,8 +196,8 @@ void interpolateGrid(matrix &fD, const matrix cD, const matrix st) { // NOLINT
 void secondCorrectionStep(const matrix& st,
                           double hS, const matrix& pF, matrix& cD, // NOLINT
                           const std::vector<matrix> &cCVec, int mc) {
-  int shape = cD.shape[0];
-  int bound = pF.shape[0];
+  int shape = cD.rows();
+  int bound = pF.rows();
   for (int i = 0; i < shape; i++) {
     for (int j = 0; j < shape; j++) {
       double correction = 0;
@@ -227,7 +227,7 @@ void secondCorrectionStep(const matrix& st,
 void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
                             double fineSize, int mc) {
-  int t = st.shape[0]/2;
+  int t = st.rows()/2;
   int tempMc = 2*mc+2;
   matrix cC2({tempMc, tempMc});
   matrix cC3({tempMc, tempMc});
@@ -259,17 +259,13 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
 
 // __________________________________________________________________
 matrix BoussinesqMlms(double size, int grid1, int t) {
-  // const double size = 2;
-  // const double size_p = 1;
   const double pressure = 1.;
-
   double size_p = size/2;
-
   double fineSizeA = size / grid1;
 
-  // result array
+  // result matrix
   matrix kM({grid1, grid1});
-  // pressure array
+  // pressure matrix
   matrix Ip({grid1, grid1});
 
   double lower_b = (grid1)/2. - (size_p/fineSizeA)/2.;
@@ -308,7 +304,6 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
     createCorrectionArrays(cCVec, st, hS, fineSizeA, mc);
     secondCorrectionStep(st, hS,
                          pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
-    // writeToFile(cDVec[d-i-1], "results/partial_"+std::to_string(int(d-i-1)));
   }
   return cDVec[0];
 }

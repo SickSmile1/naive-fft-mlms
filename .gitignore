@@ -32,8 +32,9 @@
 *.app
 
 # cache/build
-build/
+builddir/
 .cache
+.vscode
 
 # meson
 subprojects/*
