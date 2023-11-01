@@ -101,16 +101,31 @@ matrix BoussinesqFFT(double size, int grid) {
   int lb = Nx/2-(pSize/dx)/2;
   int ub = Ny/2+(pSize/dy)/2;
 
+  matrix tempP({Nx, Ny});
+  initializePressureArray(tempP, lb, ub, 1.);
   matrix Gmn({(2*Nx)-1, (2*Ny)-1});
+  return BoussinesqFFT(size, Gmn, tempP);
+}
+
+matrix BoussinesqFFT(double size, matrix surf, matrix topo) {
+  
+  auto Gmn = surf;
+  auto tempP = topo;
+
+  double Lx = size, Ly = size;
+  int Nx = tempP.rows(), Ny = tempP.cols();
+  double pSize = size/2.;
+  double dx = (Lx/Nx);
+  double dy = (Ly/Ny);
+
   cMatrix Gmn_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix p({Gmn.rows(), Gmn.cols()});
   cMatrix p_tild({Gmn.rows(), Gmn.cols()/2+1});
-  matrix tempP({Nx, Ny});
   matrix Umn({Gmn.rows(), Gmn.cols()});
   cMatrix Umn_tild({Gmn.rows(), Gmn.cols()/2+1});
-  matrix Umn_res({Nx, Ny});
+  matrix Umn_res({tempP.rows(), tempP.cols()});
 
-  initializePressureArray(tempP, lb, ub, 1.);
+
   initializeDisplacementArray(p);
 
   copyPressureArray(p, tempP);

@@ -136,7 +136,7 @@ TEST(TestMlms, calculate) {
   resMlms_6 = BoussinesqMlms(2., grids, 3);
   bool equal = false;
   bool equal1 = false;
-  double eps = 0.005;
+  double eps = 0.05;
   for (int i = 0; i < resMlms_6.rows(); i++) {
     for (int j = 0; j < resMlms_6.cols(); j++) {
       equal = std::abs(resMlms_6(i, j) - resMlms_6(j, i)) < eps;

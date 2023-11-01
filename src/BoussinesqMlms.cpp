@@ -272,9 +272,13 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
   double upper_b = (grid1)/2. + (size_p/fineSizeA)/2.;
 
   initializePressureArray(Ip, lower_b, upper_b, pressure);
+  return BoussinesqMlms(size, kM, Ip, t);
+}
 
+matrix BoussinesqMlms(double size, matrix surf, matrix topo, int t) {
   // int t = 4;
-  int mc = std::max(0.7*t*std::pow(grid1,1./t)-1, t*1.);
+  double fineSizeA = size / surf.rows();
+  int mc = std::max(0.7*t*std::pow(surf.rows(),1./t)-1, t*1.);
 
   matrix st = initializeStylusArray(t);
 
@@ -283,7 +287,7 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
   std::vector<matrix> cDVec;
 
   // fill vectors with empty arrays for different grid sizes before calculation
-  initializeStack(st, t, Ip, kM, pfVec, cDVec);
+  initializeStack(st, t, surf, topo, pfVec, cDVec);
   double d = pfVec.size()-1;
 
   // std::cout << "grid: " << pfVec[d-1].shape[0] << " grid2: " << pfVec[1].shape[0] << std::endl;

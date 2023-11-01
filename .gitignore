@@ -38,3 +38,6 @@ builddir/
 
 # meson
 subprojects/*
+
+# pybind11
+extern/*

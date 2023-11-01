@@ -21,6 +21,9 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny); // NOLINT
 void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
                         int Nx, int Ny); // NOLINT
 
+/* initialize with centered pressure patch*/
 matrix BoussinesqFFT(double size, int grid);
+/* calculate with ready surface and topography*/
+matrix BoussinesqFFT(double size, matrix surf, matrix topo);
 
 #endif  // BOUSSINESQFFT_H_

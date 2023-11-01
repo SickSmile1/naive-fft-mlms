@@ -4,8 +4,11 @@ project('Boussinesq','cpp',
   license: 'MIT'
   )
 
-cpplint_program = find_program('cpplint', required : false)
 
+##
+# cpp-lint
+##
+cpplint_program = find_program('cpplint', required : false)
 if cpplint_program.found()
     # - https://github.com/cpplint/cpplint
 
@@ -19,6 +22,12 @@ if cpplint_program.found()
       join_paths(meson.current_source_dir(), 'src')]
     cpplint_target = run_target('cpplint', command : [cpplint_program, cpplint_config])
 endif
+
+##
+# python module and pybind11 dep
+##
+py3_inst = import('python').find_installation('python3', required:true)
+py11_dep = include_directories('extern/pybind11/include')
 
 sourceRoot = meson.source_root()
 system = host_machine.system()
@@ -36,13 +45,21 @@ gtest_dep = gtest.get_variable('gtest_dep')
 gtest_main_dep = gtest.get_variable('gtest_main_dep')
 gbenchmark_dep = benchmarks.get_variable('google_benchmark_dep')
 
-
+# compile main
 sources = ['BoussinesqMain.cpp', 'src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
 my_executable = executable('BoussinesqMain', sources, include_directories:inc, dependencies:[fftw3_dep])
 
+# compile Tests
 sources2 = ['BoussinesqTest.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
 my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gtest_dep,gtest_main_dep])
 
+# compile Benchmark
 sources3 = ['BenchMain.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
 my_executable3 = executable('Bench', sources3, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gbenchmark_dep])
-# project_target = shared_library('')
+
+# create python package for Mlms, Fft
+py3_inst.extension_module('boussinesq',
+  sources: ['src/BoussinesqBind.cpp'],
+  include_directories: [py11_dep],
+  dependencies: [py3_inst.dependency()],
+)
