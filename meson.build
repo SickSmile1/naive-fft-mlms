@@ -36,30 +36,36 @@ cpp = meson.get_compiler('cpp')
 
 inc = include_directories('headers')
 
+##
+# Gtest and GBench framworks, Eigen from wrapDB, 
+##
 gtest = subproject('gtest')
 benchmarks = subproject('google-benchmark')
+eigen = subproject('eigen')
 
+# get dependencies
 fftw3_dep = dependency('fftw3', version: '>= 3.0.0', required: true)
 thread_dep = dependency('threads')
+eigen_dep = eigen.get_variable('eigen_dep')
 gtest_dep = gtest.get_variable('gtest_dep')
 gtest_main_dep = gtest.get_variable('gtest_main_dep')
 gbenchmark_dep = benchmarks.get_variable('google_benchmark_dep')
 
 # compile main
 sources = ['BoussinesqMain.cpp', 'src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
-my_executable = executable('BoussinesqMain', sources, include_directories:inc, dependencies:[fftw3_dep])
+my_executable = executable('BoussinesqMain', sources, include_directories:inc, dependencies:[fftw3_dep, eigen_dep])
 
 # compile Tests
 sources2 = ['BoussinesqTest.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
-my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gtest_dep,gtest_main_dep])
+my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gtest_dep,gtest_main_dep, eigen_dep])
 
 # compile Benchmark
 sources3 = ['BenchMain.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
-my_executable3 = executable('Bench', sources3, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gbenchmark_dep])
+my_executable3 = executable('Bench', sources3, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gbenchmark_dep, eigen_dep])
 
 # create python package for Mlms, Fft
 py3_inst.extension_module('boussinesq',
-  sources: ['src/BoussinesqBind.cpp'],
-  include_directories: [py11_dep],
-  dependencies: [py3_inst.dependency()],
+  sources: ['BoussinesqBind.cpp'],
+  include_directories: [py11_dep, inc],
+  dependencies: [py3_inst.dependency(), eigen_dep],
 )

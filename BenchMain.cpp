@@ -171,12 +171,12 @@ void FftLoop(size_t grids) {
   int ub = Ny/2+(pSize/dy)/2;
 
   matrix Gmn({(2*Nx)-1, (2*Ny)-1});
-  cMatrix Gmn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
-  matrix p({Gmn.shape[0], Gmn.shape[1]});
-  cMatrix p_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  cMatrix Gmn_tild({Gmn.rows(), Gmn.cols()/2+1});
+  matrix p({Gmn.rows(), Gmn.cols()});
+  cMatrix p_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix tempP({Nx, Ny});
-  matrix Umn({Gmn.shape[0], Gmn.shape[1]});
-  cMatrix Umn_tild({Gmn.shape[0], Gmn.shape[1]/2+1});
+  matrix Umn({Gmn.rows(), Gmn.cols()});
+  cMatrix Umn_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix Umn_res({Nx, Ny});
 
   initializePressureArray(tempP, lb, ub, 1.);
