@@ -1,6 +1,7 @@
-#include 'BoussinesqFft'
+#include "BoussinesqFft.h"
+#include "Ccg.h"
 
-void ccg(sub,topo,offset,gradient,gap) {
+void ccg(sub, topo, offset, gradient, gap) {
   auto nodDeflections = BoussinesqFft(1.0, sub, topo);
   double delta = 0;
   double G_old = 1.0;
