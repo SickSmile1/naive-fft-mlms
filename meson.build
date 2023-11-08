@@ -63,6 +63,8 @@ my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc,
 sources3 = ['BenchMain.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
 my_executable3 = executable('Bench', sources3, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gbenchmark_dep, eigen_dep])
 
+my_exe4 = executable('sparseTest',['testfolder/test.cpp'], dependencies:[thread_dep, gbenchmark_dep, eigen_dep])
+
 # create python package for Mlms, Fft
 py3_inst.extension_module('boussinesq',
   sources: ['BoussinesqBind.cpp'],

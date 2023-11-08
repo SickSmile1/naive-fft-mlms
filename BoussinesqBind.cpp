@@ -1,6 +1,6 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/eigen.h"
-#include <Eigen/core>
+#include <eigen3/Eigen/Core>
 #include "BoussinesqFft.h"
 #include "BoussinesqMlms.h"
 
