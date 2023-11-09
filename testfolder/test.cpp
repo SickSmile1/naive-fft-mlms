@@ -16,6 +16,7 @@ void sparseBench(size_t n) {
         s(row,col) = 0;
     }
   }
+  std::cout << "outerSize: " << sparseView.outerSize() << " nonzero: "<< sparseView.nonZeros() << std::endl;
 }
 
 void normalIter(size_t n) {
@@ -41,7 +42,7 @@ static void sparseBench_t2(benchmark::State &state) {
   }
 }
 
-// BENCHMARK(sparseBench_t)->RangeMultiplier(2)->Range(8,8<<10)->Unit(benchmark::kMillisecond);
+BENCHMARK(sparseBench_t)->RangeMultiplier(2)->Range(8,8<<10)->Unit(benchmark::kMillisecond);
 BENCHMARK(sparseBench_t2)->RangeMultiplier(2)->Range(8,8<<10)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
