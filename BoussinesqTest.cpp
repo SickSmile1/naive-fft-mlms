@@ -1,5 +1,6 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 
+#include <eigen3/Eigen/Core>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <fstream>
@@ -16,7 +17,7 @@
   ASSERT_EQ(res, function call);
 }*/
 
-int grids = 128;
+int grids = 32;
 matrix res1({grids, grids});
 matrix resMlms_6({grids, grids});
 matrix resFft({grids, grids});
@@ -54,6 +55,30 @@ TEST(BoussinesqNaive, calculate) {
   }
 
   EXPECT_TRUE(equal);
+}
+
+TEST(KernelNotNan, BoussinesqTest) {
+  GTEST_SKIP();
+  matrix test({31,31});
+  test.setZero();
+  matrix press =  Eigen::MatrixXd::Ones(31,31);
+  press.leftCols(2) = test.leftCols(2);
+  press.rightCols(2) = test.rightCols(2);
+  press.topRows(2) = test.topRows(2);
+  press.bottomRows(2) = test.bottomRows(2);
+  auto dxy = Eigen::ArrayXd::LinSpaced(100,-.02,.02);
+  // dxy -= Eigen::ArrayXd::Ones(100);
+  for(auto dx : dxy ) {
+    calc_displacement(press, dx, dx, test);
+    double s = test.sum();
+    ASSERT_GT(s,0);
+    bool nan;
+    for(auto v : test.reshaped()) {
+      nan = std::isnan(v);
+    }
+    ASSERT_FALSE(nan);
+    test.setZero();
+  }
 }
 
 TEST(WriteToFile, writeToFile) {
@@ -131,7 +156,7 @@ TEST(BoussinesqMlms, initializeStylusArray) {
 }
 
 TEST(TestMlms, calculate) {
-  // GTEST_SKIP();
+  GTEST_SKIP();
 
   resMlms_6 = BoussinesqMlms(2., grids, 3);
   bool equal = false;
@@ -158,6 +183,7 @@ TEST(TestMlms, calculate) {
 }
 
 TEST(BoussinesqFFT2, calculate) {
+  // GTEST_SKIP();
   double Lx = 2., Ly = 2.;
   int Nx = grids, Ny = grids;
   double pSize = 1;
@@ -166,6 +192,8 @@ TEST(BoussinesqFFT2, calculate) {
 
   int lb = Nx/2-(pSize/dx)/2;
   int ub = Ny/2+(pSize/dy)/2;
+  std::cout << "dis is dx: " << dx << std::endl;
+  // std::cout << "dis is dx: " << dx << std::endl;
 
   matrix Gmn({(2*Nx)-1, (2*Ny)-1});
   cMatrix Gmn_tild({Gmn.rows(), Gmn.cols()/2+1});

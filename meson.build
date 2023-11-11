@@ -1,6 +1,6 @@
 project('Boussinesq','cpp', 
   version:'1.0.0',
-  default_options:['warning_level=3','cpp_std=c++17','buildtype=debugoptimized'],
+  default_options:['warning_level=3','cpp_std=c++20','buildtype=debug'],
   license: 'MIT'
   )
 
@@ -57,14 +57,15 @@ my_executable = executable('BoussinesqMain', sources, include_directories:inc, d
 
 # compile Tests
 sources2 = ['BoussinesqTest.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
-my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gtest_dep,gtest_main_dep, eigen_dep])
+my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc,
+  dependencies:[fftw3_dep, thread_dep,gtest_dep,gtest_main_dep, eigen_dep])
 
 # compile Benchmark
 sources3 = ['BenchMain.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
 my_executable3 = executable('Bench', sources3, include_directories:inc, dependencies:[fftw3_dep, thread_dep,gbenchmark_dep, eigen_dep])
 
-my_exe4 = executable('sparseTest',['testfolder/test.cpp'], dependencies:[thread_dep, gbenchmark_dep, eigen_dep])
-my_exe5 = executable('ccg',['testfolder/Ccg.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp'], include_directories:inc, dependencies:[eigen_dep, fftw3_dep])
+#my_exe4 = executable('sparseTest',['testfolder/test.cpp'], dependencies:[thread_dep, gbenchmark_dep, eigen_dep])
+#my_exe5 = executable('ccg',['testfolder/Ccg.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp'], include_directories:inc, dependencies:[eigen_dep, fftw3_dep])
 
 # create python package for Mlms, Fft
 py3_inst.extension_module('boussinesq',

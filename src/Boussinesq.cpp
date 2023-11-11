@@ -1,8 +1,9 @@
-/* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
+/*Boussinesq.cpp Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 // #include <fftw3.h>
 #include <fstream>
 #include <iostream>
 #include <cmath>
+#include <cassert>
 #include "./Boussinesq.h"
 
 // __________________________________________________________________
@@ -45,6 +46,7 @@ double calcBoussinesq(double a, double b, double x, double y) {
             ((x + a) + sqrt(pow((y - b), 2) + pow((x + a), 2)));
   fourth = (y - b) * log(fourth);
   double res = (first+second+third+fourth)/M_PI;
+  assert(!std::isnan(res));
   return res;
 }
 
