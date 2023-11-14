@@ -12,7 +12,7 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 
 using matrix = Eigen::MatrixXd;
 using cMatrix = Eigen::MatrixXcd;

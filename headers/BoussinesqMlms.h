@@ -6,7 +6,7 @@
 
 matrix initializeStylusArray(int t); // NOLINT
 
-void initializeStack(matrix &st, const int t, const matrix Ip, // NOLINT
+void initializeStack(const int t, const matrix Ip, // NOLINT
                     const matrix kM, // NOLINT
                     std::vector<matrix>& pfVec,
                     std::vector<matrix>& cDVec);
@@ -64,8 +64,7 @@ void interpolateGrid(matrix &nextDisplacement, // NOLINT
                      const matrix coarseDisplacement, // NOLINT
                      const matrix st);
 
-void secondCorrectionStep(const matrix& st, // NOLINT
-                          double hS, const matrix& pF, // NOLINT
+void secondCorrectionStep(const matrix& pF, // NOLINT
                           matrix& cD, const std::vector<matrix> &cCVec, // NOLINT
                           int mc);  // NOLINT
 

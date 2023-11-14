@@ -36,7 +36,7 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
 }
 
 // __________________________________________________________________
-void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
+void transformGmnP(matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
                   matrix& p, cMatrix& p_tild) { // NOLINT
   fftw_plan p1; // TODO: reuse plan? use inplace array
   p1 = fftw_plan_dft_r2c_2d(Gmn.rows(), Gmn.cols(), Gmn.data(),
@@ -55,7 +55,7 @@ void transformGmnP(int Nx, int Ny, matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
 }
 
 // __________________________________________________________________
-void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
+void transformToReal(cMatrix& Umn_tild, matrix& Umn) { // NOLINT
   fftw_plan p3; // TODO: use in place array
   p3 = fftw_plan_dft_c2r_2d(Umn.rows(), Umn.cols(),
                             reinterpret_cast<fftw_complex*>
@@ -66,8 +66,7 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn, int Nx, int Ny) { // NOLINT
 }
 
 // __________________________________________________________________
-void writeToResultArray(const matrix& Umn, matrix& Umn_res, // NOLINT
-                        int Nx, int Ny) { //NOLINT
+void writeToResultArray(const matrix& Umn, matrix& Umn_res) { //NOLINT
   for (int i = 0; i < Umn_res.rows(); i++) {
     for (int j = 0; j < Umn_res.cols(); j++) {
       // devide each result by Nx*Ny
@@ -114,7 +113,6 @@ matrix BoussinesqFFT(double size, matrix surf, matrix topo) {
 
   double Lx = size, Ly = size;
   int Nx = tempP.rows(), Ny = tempP.cols();
-  double pSize = size/2.;
   double dx = (Lx/Nx);
   double dy = (Ly/Ny);
 
@@ -132,13 +130,13 @@ matrix BoussinesqFFT(double size, matrix surf, matrix topo) {
 
   calculateGmn(Gmn, dx, dy);
 
-  transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
+  transformGmnP(Gmn, Gmn_tild, p, p_tild);
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
 
-  transformToReal(Umn_tild, Umn, Nx, Ny);
+  transformToReal(Umn_tild, Umn);
 
-  writeToResultArray(Umn, Umn_res, Nx, Ny);
+  writeToResultArray(Umn, Umn_res);
 
   return Umn_res;
 }

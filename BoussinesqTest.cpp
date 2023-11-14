@@ -1,6 +1,6 @@
 /* Copyright 2023 <Ilia Fedotov @ Uni Freiburg> */
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <fstream>
@@ -209,13 +209,13 @@ TEST(BoussinesqFFT2, calculate) {
   copyPressureArray(p, tempP);
   calculateGmn(Gmn, dx, dy);
 
-  transformGmnP(Nx, Ny, Gmn, Gmn_tild, p, p_tild);
+  transformGmnP(Gmn, Gmn_tild, p, p_tild);
 
   multiplyTransformed(Gmn_tild, Umn_tild, p_tild);
 
-  transformToReal(Umn_tild, Umn, Nx, Ny);
+  transformToReal(Umn_tild, Umn);
 
-  writeToResultArray(Umn, Umn_res, Nx, Ny);
+  writeToResultArray(Umn, Umn_res);
   resFft = Umn_res;
   bool equal = false;
   bool equal1 = false;
@@ -244,6 +244,7 @@ TEST(tsquare_norm, mlms_fft) {
       res_t1 += std::abs(rest1(i, j)-resFft(i, j));
     }
   }
+  writeToFile(rest1, "mlms1");
 
   matrix rest2 = BoussinesqMlms(2., grids, 2);
   double res_t2 = 0;
@@ -252,13 +253,16 @@ TEST(tsquare_norm, mlms_fft) {
       res_t2 += std::abs(rest2(i, j)-resFft(i, j));
     }
   }
+  writeToFile(rest2, "mlms2");
 
   double res_t3 = 0;
+  resMlms_6 = BoussinesqMlms(2.,grids,3);
   for (int i = 0; i < rest2.rows(); i++) {
     for (int j = 0; j < rest2.cols(); j++) {
       res_t3 += std::abs(resMlms_6(i, j)-resFft(i, j));
     }
   }
+  writeToFile(resMlms_6, "mlms3");
   EXPECT_LT(res_t3, res_t2);
   EXPECT_LT(res_t2, res_t1);
   std::cout << res_t1 << " : " << res_t2 <<  " : " << res_t3 << std::endl;
