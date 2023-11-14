@@ -74,9 +74,9 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             double fineSize, int mc);
 
 /* initialize with centered pressure patch*/
-matrix BoussinesqMlms(double size, int grid1, int t);
+matrix BoussinesqMlms(const double size, const int grid1, const int t);
 /* calculate with ready surface and topography*/
-matrix BoussinesqMlms(double size, matrix surf, matrix topo, int t);
+matrix BoussinesqMlms(const double size, matrix& surf, const matrix& topo, const int t);
 
 #endif  // BOUSSINESQMLMS_H_
 

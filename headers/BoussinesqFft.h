@@ -6,8 +6,6 @@
 
 void copyPressureArray(matrix& p, const matrix& tempP); // NOLINT
 
-void copyPressureArray(matrix& p, const matrix& tempP); // NOLINT
-
 void calculateGmn(matrix &Gmn, double dx, double dy); // NOLINT
 
 void transformGmnP(matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
@@ -21,8 +19,8 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn); // NOLINT
 void writeToResultArray(const matrix& Umn, matrix& Umn_res); // NOLINT
 
 /* initialize with centered pressure patch*/
-matrix BoussinesqFFT(double size, int grid);
+matrix BoussinesqFFT(const double size, const int grid);
 /* calculate with ready surface and topography*/
-matrix BoussinesqFFT(double size, matrix surf, matrix topo);
+matrix BoussinesqFFT(const double size, matrix& surf, const matrix& topo);
 
 #endif  // BOUSSINESQFFT_H_

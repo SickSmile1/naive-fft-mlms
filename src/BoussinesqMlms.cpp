@@ -131,7 +131,7 @@ void correctionSteps(matrix& cC, const matrix& st, int mc, int t, // NOLINT
 void applyCorrection(matrix &cD, const matrix cC, // NOLINT
                       const matrix Ip, // NOLINT
                       int t, int mc) {
-  #pragma omp parallel for simd
+  // #pragma omp parallel for simd
   for (int i = 0; i < cD.rows(); i++) {
     for (int j = 0; j < cD.cols(); j++) {
       cD(i, j) += correctionHelper(cC, Ip, t, i, j, mc);
@@ -226,7 +226,7 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
                             const matrix &st, double hS, // NOLINT
                             double fineSize, int mc) {
   int t = st.rows()/2;
-  int tempMc = 2*mc+2;
+  int tempMc = 2*mc+1;
   matrix cC2({tempMc, tempMc});
   matrix cC3({tempMc, tempMc});
   matrix cC4({tempMc, tempMc});
@@ -237,12 +237,12 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
       for (int k = 1; k <= t*2; k++) {
         for (int l = 1; l <= t*2; l++) {
           res4 +=  st(k-1, 0)*st(l-1, 0) *
-                calcBoussinesq(i+2*(k-t)-1, j+2*(l-t)-1, hS, hS,
+                calcBoussinesq((i+2*(k-t)-1), (j+2*(l-t)-1), hS, hS,
                           fineSize, fineSize);
         }
-        res2 += st(k-1, 0) * calcBoussinesq(i+2*(k-t)-1, j, hS, hS,
+        res2 += st(k-1, 0) * calcBoussinesq((i+2*(k-t)-1), j, hS, hS,
                                         fineSize, fineSize);
-        res3 += st(k-1, 0) * calcBoussinesq(i, j+2*(k-t)-1, hS, hS,
+        res3 += st(k-1, 0) * calcBoussinesq(i, (j+2*(k-t)-1), hS, hS,
                                         fineSize, fineSize);
       }
       cC2(i+(mc), j+(mc)) = K-res2;
@@ -256,7 +256,7 @@ void createCorrectionArrays(std::vector<matrix> &cCVec, // NOLINT
 }
 
 // __________________________________________________________________
-matrix BoussinesqMlms(double size, int grid1, int t) {
+matrix BoussinesqMlms(const double size, const int grid1, const int t) {
   const double pressure = 1.;
   double size_p = size/2;
   double fineSizeA = size / grid1;
@@ -273,7 +273,7 @@ matrix BoussinesqMlms(double size, int grid1, int t) {
   return BoussinesqMlms(size, kM, Ip, t);
 }
 
-matrix BoussinesqMlms(double size, matrix surf, matrix topo, int t) {
+matrix BoussinesqMlms(const double size, matrix& surf, const matrix& topo, const int t) {
   // int t = 4;
   double fineSizeA = size / surf.rows();
   int mc = std::max(0.7*t*std::pow(surf.rows(),1./t)-1, t*1.);
@@ -285,7 +285,7 @@ matrix BoussinesqMlms(double size, matrix surf, matrix topo, int t) {
   std::vector<matrix> cDVec;
 
   // fill vectors with empty arrays for different grid sizes before calculation
-  initializeStack(t, surf, topo, pfVec, cDVec);
+  initializeStack(t, topo, topo, pfVec, cDVec);
   double d = pfVec.size()-1;
 
   // std::cout << "grid: " << pfVec[d-1].shape[0] << " grid2: " << pfVec[1].shape[0] << std::endl;
@@ -293,6 +293,7 @@ matrix BoussinesqMlms(double size, matrix surf, matrix topo, int t) {
   double coarseSize = fineSizeA*pow(2, d);
   std::vector<matrix> cCVec;
   calcCoarsePressure(pfVec, st);
+  // std::cout << pfVec[1] << std::endl << pfVec[2] << std::endl;
   calc_displacement(pfVec[d], coarseSize, fineSizeA, cDVec[d]);
   for (std::size_t i = 0; i < pfVec.size()-1; i++) {
     double hS = fineSizeA*pow(2, d-i-1);
@@ -300,11 +301,18 @@ matrix BoussinesqMlms(double size, matrix surf, matrix topo, int t) {
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     correctionSteps(cC, st, mc, t, fineSizeA, hS);
+    writeToFile(cC, "results/cc_"+std::to_string(i));
     applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
+    writeToFile(cDVec[d-i], "results/corr_1_"+std::to_string(i));
     interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
+    writeToFile(cDVec[d-i], "results/ipol_"+std::to_string(i));
     cCVec.reserve(3);
     createCorrectionArrays(cCVec, st, hS, fineSizeA, mc);
+    writeToFile(cCVec[0], "results/ccvec1_"+std::to_string(i));
+    writeToFile(cCVec[1], "results/ccvec2_"+std::to_string(i));
+    writeToFile(cCVec[2], "results/ccvec3_"+std::to_string(i));
     secondCorrectionStep(pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
+    writeToFile(cDVec[d-i-1], "results/corr_2_"+std::to_string(i));
   }
   return cDVec[0];
 }

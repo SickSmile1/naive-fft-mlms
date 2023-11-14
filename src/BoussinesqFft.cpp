@@ -90,7 +90,7 @@ void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
 
 
 // __________________________________________________________________
-matrix BoussinesqFFT(double size, int grid) {
+matrix BoussinesqFFT(const double size, const int grid) {
   double Lx = size, Ly = size;
   int Nx = grid, Ny = grid;
   double pSize = size/2.;
@@ -106,7 +106,7 @@ matrix BoussinesqFFT(double size, int grid) {
   return BoussinesqFFT(size, Gmn, tempP);
 }
 
-matrix BoussinesqFFT(double size, matrix surf, matrix topo) {
+matrix BoussinesqFFT(const double size, matrix& surf, const matrix& topo) {
   
   auto Gmn = surf;
   auto tempP = topo;
