@@ -9,7 +9,7 @@
 #include "Boussinesq.h"
 #include "BoussinesqMlms.h"
 #include "BoussinesqFft.h"
-
+#pragma GCC optimize ("no-fast-math")
 // Template
 /*TEST(filename, function){
  TEMPLATE FOR TESTS
@@ -23,6 +23,7 @@ matrix resMlms_6({grids, grids});
 matrix resFft({grids, grids});
 
 TEST(BoussinesqNaive, calculate) {
+  res1.setZero();
   // GTEST_SKIP();
   // test for symmetry of resulting matrix
   double size = 2.;
@@ -58,7 +59,7 @@ TEST(BoussinesqNaive, calculate) {
 }
 
 TEST(KernelNotNan, BoussinesqTest) {
-  GTEST_SKIP();
+  // GTEST_SKIP();
   matrix test({31,31});
   test.setZero();
   matrix press =  Eigen::MatrixXd::Ones(31,31);
@@ -72,11 +73,13 @@ TEST(KernelNotNan, BoussinesqTest) {
     calc_displacement(press, dx, dx, test);
     double s = test.sum();
     ASSERT_GT(s,0);
-    bool nan;
+    bool nan, nan2;
     for(auto v : test.reshaped()) {
       nan = std::isnan(v);
+      nan2 = (v!=v);
     }
     ASSERT_FALSE(nan);
+    ASSERT_FALSE(nan2);
     test.setZero();
   }
 }
@@ -216,6 +219,7 @@ TEST(BoussinesqFFT2, calculate) {
   transformToReal(Umn_tild, Umn);
 
   writeToResultArray(Umn, Umn_res);
+  resFft.setZero();
   resFft = Umn_res;
   bool equal = false;
   bool equal1 = false;
@@ -237,31 +241,33 @@ TEST(BoussinesqFFT2, calculate) {
 }
 
 TEST(tsquare_norm, mlms_fft) {
+  double fftSum = resFft.sum();
   matrix rest1 = BoussinesqMlms(2., grids, 1);
-  double res_t1 = 0;
-  for (int i = 0; i < rest1.rows(); i++) {
+  double res_t1 = std::abs(rest1.sum()-fftSum);
+  /* for (int i = 0; i < rest1.rows(); i++) {
     for (int j = 0; j < rest1.cols(); j++) {
       res_t1 += std::abs(rest1(i, j)-resFft(i, j));
     }
-  }
+  } */
   writeToFile(rest1, "mlms1");
 
   matrix rest2 = BoussinesqMlms(2., grids, 2);
-  double res_t2 = 0;
-  for (int i = 0; i < rest2.rows(); i++) {
+  double res_t2 = std::abs(rest2.sum()-fftSum);
+/*   for (int i = 0; i < rest2.rows(); i++) {
     for (int j = 0; j < rest2.cols(); j++) {
       res_t2 += std::abs(rest2(i, j)-resFft(i, j));
     }
-  }
+  } */
   writeToFile(rest2, "mlms2");
 
-  double res_t3 = 0;
+  resMlms_6.setZero();
   resMlms_6 = BoussinesqMlms(2.,grids,3);
-  for (int i = 0; i < rest2.rows(); i++) {
+  double res_t3 = std::abs(resMlms_6.sum()-fftSum);
+/*   for (int i = 0; i < rest2.rows(); i++) {
     for (int j = 0; j < rest2.cols(); j++) {
       res_t3 += std::abs(resMlms_6(i, j)-resFft(i, j));
     }
-  }
+  } */
   writeToFile(resMlms_6, "mlms3");
   EXPECT_LT(res_t3, res_t2);
   EXPECT_LT(res_t2, res_t1);

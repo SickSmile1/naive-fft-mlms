@@ -32,18 +32,22 @@ double calcBoussinesq(double a, double b, double x, double y) {
   // naive formula implementation for calculating a pressure patch
   first = ((y + b) + sqrt(pow((y + b), 2.) + pow((x + a), 2.))) /
           ((y - b) + sqrt(pow((y - b), 2.) + pow((x + a), 2.)));
+  assert(first>0);
   first = (x + a) * log(first);
 
   second = ((x + a) + sqrt(pow((y + b), 2.) + pow((x + a), 2.))) /
            ((x - a) + sqrt(pow((y + b), 2.) + pow((x - a), 2.)));
+  assert(second>0);
   second = (y + b) * log(second);
 
   third = ((y - b) + sqrt(pow((y - b), 2.) + pow((x - a), 2.))) /
           ((y + b) + sqrt(pow((y + b), 2.) + pow((x - a), 2.)));
+  assert(third>0);
   third = (x - a) * log(third);
 
   fourth = ((x - a) + sqrt(pow((y - b), 2.) + pow((x - a), 2.))) /
             ((x + a) + sqrt(pow((y - b), 2.) + pow((x + a), 2.)));
+  assert(fourth>0);
   fourth = (y - b) * log(fourth);
   double res = (first+second+third+fourth)/M_PI;
   assert(!std::isnan(res));

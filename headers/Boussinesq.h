@@ -30,6 +30,7 @@ template <class T>
 void writeToFile(const T &arr, const std::string name) {
   std::ofstream file;
   file.open(name, std::ofstream::out | std::ofstream::trunc);
+  file << std::setprecision (25);
   file << arr << std::endl;
   file.close();
 }

@@ -39,7 +39,7 @@ inc = include_directories('headers')
 ##
 # Gtest and GBench framworks, Eigen from wrapDB, 
 ##
-gtest = subproject('gtest')
+# gtest = subproject('gtest')
 benchmarks = subproject('google-benchmark')
 eigen = subproject('eigen')
 
@@ -47,8 +47,8 @@ eigen = subproject('eigen')
 fftw3_dep = dependency('fftw3', version: '>= 3.0.0', required: true)
 thread_dep = dependency('threads')
 eigen_dep = eigen.get_variable('eigen_dep')
-gtest_dep = gtest.get_variable('gtest_dep')
-gtest_main_dep = gtest.get_variable('gtest_main_dep')
+gtest_dep = dependency('gtest', main:true)
+# gtest_main_dep = gtest.get_variable('gtest_main_dep')
 gbenchmark_dep = benchmarks.get_variable('google_benchmark_dep')
 omp = dependency('openmp')
 
@@ -61,7 +61,7 @@ my_executable = executable('BoussinesqMain', sources, include_directories:inc, d
 # compile Tests
 sources2 = ['BoussinesqTest.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
 my_executable2 = executable('BoussinesqTest', sources2, include_directories:inc,
-  dependencies:[fftw3_dep, thread_dep,gtest_dep,gtest_main_dep, eigen_dep,omp], cpp_args: error_args)
+  dependencies:[fftw3_dep, thread_dep,gtest_dep, eigen_dep,omp], cpp_args: error_args)
 test('gtest',my_executable2)
 
 # compile Benchmark
