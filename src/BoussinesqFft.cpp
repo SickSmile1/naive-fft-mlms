@@ -14,7 +14,27 @@ void copyPressureArray(matrix& p, const matrix& tempP) {// NOLINT
 
 // __________________________________________________________________
 void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
+  int n = Gmn.rows()+1;
+  int oShape = (n-1)/2 + 1;
+  int shape = (n/2)-1;
+  std::cout << "gmn shapes "<< oShape << " : " << shape << "\n" << std::endl;
+  Gmn.setZero();
+  for (int i = 0; i <= oShape; i++) {
+    for (int j = 0; j <= oShape; j++) {
+      double res = calcBoussinesq(i, j, dx, dy, dx, dy);
+      Gmn(j, i) = res;
+      Gmn(i, j) = res;
+    }
+  }
+  Gmn.block(0,oShape,oShape,oShape) = Gmn.block(0,0,oShape,shape).rowwise().reverse();
+  Gmn.block(oShape,0,shape,shape+oShape) = Gmn.block(0,0,shape,shape+oShape).reverse();
+  writeToFile(Gmn, "gmn");
+}
+
+// BACKUP
+/*void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
   int shape = (Gmn.rows())/2;
+  Gmn.setZero();
   for (int i = 0; i <= shape; i++) {
     double res = calcBoussinesq(i, 0, dx, dy, dx, dy);
     Gmn(i, 0) = res;
@@ -33,7 +53,7 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
       Gmn((2*shape+1)-i, (2*shape+1)-j) = res;
     }
   }
-}
+}*/
 
 // __________________________________________________________________
 void transformGmnP(matrix& Gmn, cMatrix& Gmn_tild, // NOLINT
@@ -102,7 +122,10 @@ matrix BoussinesqFFT(const double size, const int grid) {
 
   matrix tempP({Nx, Ny});
   initializePressureArray(tempP, lb, ub, 1.);
-  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
+  // matrix Gmn({(2*Nx)-1, (2*Ny)-1});
+  matrix Gmn({ ((Nx-1)/2)+((Nx/2)-1) , ((Ny-1)/2)+((Ny/2)-1)});
+  std::cout << "nx shape " << Nx << " : " << Ny << "\n" << std::endl;
+  std::cout << "constr shape " << Gmn.rows() << " : " << Gmn.cols() << "\n" << std::endl;
   return BoussinesqFFT(size, Gmn, tempP);
 }
 
