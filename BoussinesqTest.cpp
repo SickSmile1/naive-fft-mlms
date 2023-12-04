@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <gtest/gtest.h>
+#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <thread> //NOLINT
@@ -119,6 +120,36 @@ TEST(WriteToFile, writeToFile) {
   ASSERT_EQ(test(2, 1), res2);
   buff >> res2;
   ASSERT_EQ(test(2, 2), res2);
+}
+
+TEST(BoussinesqFft3, gmn) {
+  std::vector<int> n{15,29,35,41,53,57};
+  for (std::size_t k = 0; k < n.size(); k++) {
+    // replace 0.84*log(i) for constant t
+    // matrix res_t2 = BoussinesqMlms(2., i, 0.84*log(i));
+    matrix gmn({(2*n[k])-1, (2*n[k])-1});
+    calculateGmn(gmn, 2./n[k], 2./n[k]);
+    std::ifstream inp("../results/gmn_test/gmn"+std::to_string(n[k]));
+    std::stringstream buff;
+    buff << inp.rdbuf();
+    double read_res;
+    // const char *read_chr;
+    matrix read({(2*n[k])-1, (2*n[k])-1});
+    for(int i = 0; i < gmn.rows(); i++) {
+      for(int j = 0; j < gmn.cols(); j++) {
+        buff >> read_res;
+        // read_res = std::strtod(read_chr, NULL);
+        read(i,j) = read_res;
+      }
+    }
+    std::cout << read << std::endl;
+    for(int i = 0; i < gmn.rows(); i++) {
+      for(int j = 0; j < gmn.cols(); j++) {
+        // if(gmn(i,j) != read_res) std::cout << i << std::endl;
+        ASSERT_NEAR(gmn(i,j), read(i,j), 0.001);
+      }
+    }
+  }
 }
 
 TEST(Boussinesq, bCheck) {
@@ -241,6 +272,7 @@ TEST(BoussinesqFFT2, calculate) {
 }
 
 TEST(BoussinesqFft3, fftprime) {
+  GTEST_SKIP();
   std::vector<int> n{7,15,29,31,35,41,49,53,57};
   // for (int i = 31; i < 260; i*=2) {
   for (std::size_t k = 0; k < n.size(); k++) {

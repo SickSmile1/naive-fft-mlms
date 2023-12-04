@@ -56,7 +56,7 @@ error_args = ['-Wall', '-Werror', '-Wshadow', '-Wundef','-fno-common','-g3', '-O
 
 # compile main
 sources = ['BoussinesqMain.cpp', 'src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
-my_executable = executable('BoussinesqMain', sources, include_directories:inc, dependencies:[fftw3_dep, eigen_dep,omp])#, cpp_args: error_args)
+my_executable = executable('BoussinesqMain', sources, include_directories:inc, dependencies:[fftw3_dep, eigen_dep,omp], cpp_args: error_args)
 
 # compile Tests
 sources2 = ['BoussinesqTest.cpp','src/BoussinesqMlms.cpp', 'src/BoussinesqFft.cpp', 'src/Boussinesq.cpp']
