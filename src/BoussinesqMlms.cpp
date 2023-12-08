@@ -301,18 +301,11 @@ matrix BoussinesqMlms(const double size, matrix& surf, const matrix& topo, const
     int temp_mc = (mc*2)+1;
     matrix cC({temp_mc, temp_mc});
     correctionSteps(cC, st, mc, t, fineSizeA, hS);
-    writeToFile(cC, "results/cc_"+std::to_string(i));
     applyCorrection(cDVec[d-i], cC, pfVec[d-i-1], t, mc);
-    writeToFile(cDVec[d-i], "results/corr_1_"+std::to_string(i));
     interpolateGrid(cDVec[d-i-1], cDVec[d-i], st);
-    writeToFile(cDVec[d-i], "results/ipol_"+std::to_string(i));
     cCVec.reserve(3);
     createCorrectionArrays(cCVec, st, hS, fineSizeA, mc);
-    writeToFile(cCVec[0], "results/ccvec1_"+std::to_string(i));
-    writeToFile(cCVec[1], "results/ccvec2_"+std::to_string(i));
-    writeToFile(cCVec[2], "results/ccvec3_"+std::to_string(i));
     secondCorrectionStep(pfVec[d-i-1], cDVec[d-i-1], cCVec, mc);
-    writeToFile(cDVec[d-i-1], "results/corr_2_"+std::to_string(i));
   }
   return cDVec[0];
 }

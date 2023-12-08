@@ -28,8 +28,8 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
       Gmn(i, j) = res;
     }
   }
-  Gmn.block(0,oShape,oShape,shape) = Gmn.block(0,1,oShape,shape).rowwise().reverse();
-  Gmn.block(oShape,0,shape,oShape+shape) = Gmn.block(1,0,shape,oShape+shape).colwise().reverse();
+  Gmn.block(0,oShape,oShape,shape+1) = Gmn.block(0,1,oShape,shape+1).rowwise().reverse();
+  Gmn.block(oShape,0,shape+1,oShape+shape+1) = Gmn.block(1,0,shape+1,oShape+shape+1).colwise().reverse();
   // writeToFile(Gmn, "gmn"+std::to_string(dx));
 }
 
@@ -100,10 +100,10 @@ matrix BoussinesqFFT(const double size, const int grid) {
 
   matrix tempP({Nx, Ny});
   initializePressureArray(tempP, lb, ub, 1.);
-  matrix Gmn({(2*Nx), (2*Ny)});
+  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
   // matrix Gmn({ ((Nx-1)/2)+((Nx/2)-1) , ((Ny-1)/2)+((Ny/2)-1)});
-  std::cout << "nx shape " << Nx << " : " << Ny << "\n" << std::endl;
-  std::cout << "constr shape " << Gmn.rows() << " : " << Gmn.cols() << "\n" << std::endl;
+  // std::cout << "nx shape " << Nx << " : " << Ny << "\n" << std::endl;
+  // std::cout << "constr shape " << Gmn.rows() << " : " << Gmn.cols() << "\n" << std::endl;
   return BoussinesqFFT(size, Gmn, tempP);
 }
 
