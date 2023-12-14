@@ -3,7 +3,20 @@
 #include "eigen3/Eigen/SparseCore"
 #include <benchmark/benchmark.h>
 
-void sparseBench(size_t n) {
+
+int main() {
+  matrix res = Eigen::MatrixXd::Ones(20,20);
+  matrix res2({10,10});
+  res2 = res.block(0,0, res.rows(),res.cols());
+  res2 *= (1./(res.rows()*res.cols()));
+  std::cout << 1./(res.rows()*res.cols()) << "\n" << res2 << std::endl;
+
+  return 0;
+}
+
+
+
+/*void sparseBench(size_t n) {
   matrix s = Eigen::MatrixXd::Zero(n,n);
   s(n/2,1) = 1;
   s(n-2,n-1) = 2;
@@ -45,4 +58,4 @@ static void sparseBench_t2(benchmark::State &state) {
 BENCHMARK(sparseBench_t)->RangeMultiplier(2)->Range(8,8<<10)->Unit(benchmark::kMillisecond);
 BENCHMARK(sparseBench_t2)->RangeMultiplier(2)->Range(8,8<<10)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_MAIN();
+BENCHMARK_MAIN();*/

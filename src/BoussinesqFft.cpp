@@ -18,13 +18,10 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
   int n = Gmn.rows();
   int oShape = n/2+1;
   int shape = (n/2)-1;
-  // std::cout << "gmn shapes "<< oShape << " : " << shape << "\n" << std::endl;
-  // std::cout << "gmn rows:cols " << Gmn.rows() << " : " << Gmn.cols() << std::endl;
   Gmn.setZero();
   for (int i = 0; i < oShape; i++) {
     for (int j = 0; j < oShape; j++) {
       double res = calcBoussinesq(i, j, dx, dy, dx, dy);
-      // Gmn(j, i) = res;
       Gmn(i, j) = res;
     }
   }
@@ -65,25 +62,14 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn) { // NOLINT
 
 // __________________________________________________________________
 void writeToResultArray(const matrix& Umn, matrix& Umn_res) { //NOLINT
-  for (int i = 0; i < Umn_res.rows(); i++) {
-    for (int j = 0; j < Umn_res.cols(); j++) {
-      // devide each result by Nx*Ny
-      Umn_res(i, j) = Umn(i, j)/(Umn.rows()*Umn.rows()); 
-      // #TODO replace by simplified eigen operatiom
-    }
-  }
-  // writeToFile(Umn_res, "whatthe");
+  Umn_res = Umn.block(0,0, Umn_res.rows(), Umn_res.cols());
+  Umn_res *= (1./(Umn.rows()* Umn.cols()));
 }
 
 // __________________________________________________________________
 void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
                         cMatrix& p_tild) { // NOLINT
-  for (int i = 0; i < Gmn_tild.rows(); i++) {
-    for (int j = 0; j < Gmn_tild.cols(); j++) {
-      Umn_tild(i, j) = Gmn_tild(i, j)*p_tild(i, j);
-    }
-  }
-  // Umn_tild.array() = Gmn_tild.array() * p_tild.array();
+  Umn_tild.array() = Gmn_tild.array() * p_tild.array();
 }
 
 
@@ -101,9 +87,6 @@ matrix BoussinesqFFT(const double size, const int grid) {
   matrix tempP({Nx, Ny});
   initializePressureArray(tempP, lb, ub, 1.);
   matrix Gmn({(2*Nx)-1, (2*Ny)-1});
-  // matrix Gmn({ ((Nx-1)/2)+((Nx/2)-1) , ((Ny-1)/2)+((Ny/2)-1)});
-  // std::cout << "nx shape " << Nx << " : " << Ny << "\n" << std::endl;
-  // std::cout << "constr shape " << Gmn.rows() << " : " << Gmn.cols() << "\n" << std::endl;
   return BoussinesqFFT(size, Gmn, tempP);
 }
 
@@ -123,9 +106,6 @@ matrix BoussinesqFFT(const double size, matrix& surf, const matrix& topo) {
   matrix Umn({Gmn.rows(), Gmn.cols()});
   cMatrix Umn_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix Umn_res({tempP.rows(), tempP.cols()});
-
-
-  initializeDisplacementArray(p);
 
   copyPressureArray(p, tempP);
 
