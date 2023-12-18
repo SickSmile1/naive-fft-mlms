@@ -27,7 +27,7 @@ void calculateGmn(matrix &Gmn, double dx, double dy) { // NOLINT
   }
   Gmn.block(0,oShape,oShape,shape+1) = Gmn.block(0,1,oShape,shape+1).rowwise().reverse();
   Gmn.block(oShape,0,shape+1,oShape+shape+1) = Gmn.block(1,0,shape+1,oShape+shape+1).colwise().reverse();
-  // writeToFile(Gmn, "gmn"+std::to_string(dx));
+  writeToFile(Gmn, "gmn"+std::to_string(dx));
 }
 
 // __________________________________________________________________
@@ -56,14 +56,15 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn) { // NOLINT
                             reinterpret_cast<fftw_complex*>
                             (Umn_tild.data()),
                             Umn.data(), FFTW_ESTIMATE);
-  fftw_execute(p3);
+  // fftw_execute(p3);
+  Umn = Umn_tild.real();
   fftw_destroy_plan(p3);
 }
 
 // __________________________________________________________________
 void writeToResultArray(const matrix& Umn, matrix& Umn_res) { //NOLINT
   Umn_res = Umn.block(0,0, Umn_res.rows(), Umn_res.cols());
-  Umn_res *= (1./(Umn.rows()* Umn.cols()));
+  Umn_res /= (Umn.rows()* Umn.cols());
 }
 
 // __________________________________________________________________

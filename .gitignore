@@ -33,8 +33,12 @@
 
 # cache/build
 builddir/
+buildDir/
+build/
 .cache
 .vscode
+.idea
+.ipynb_checkpoints
 
 # meson
 subprojects/*

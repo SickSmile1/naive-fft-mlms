@@ -34,6 +34,7 @@ void ccg(matrix& sub, matrix& topo, double offset, double gradient) {
   while (eps > eps0) {
     matrix nd = BoussinesqFFT(6.0, p_ij, topo);
     std::cout << nd << std::endl;
+    // writeToFile(nd, "fft_sphere");
     matrix gap = - nd - topo;
     double g_mean = gMean(nd, gap);
     std::cout << g_mean << std::endl;
