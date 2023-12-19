@@ -7,9 +7,10 @@
 int main() {
   matrix res = Eigen::MatrixXd::Ones(20,20);
   matrix res2({10,10});
-  res2 = res.block(0,0, res.rows(),res.cols());
-  res2 *= (1./(res.rows()*res.cols()));
-  std::cout << 1./(res.rows()*res.cols()) << "\n" << res2 << std::endl;
+  res.block(5,5,res2.rows(), res2.cols()) = res2;
+  res *= (1./(res.rows()*res.cols()));
+  auto nep = (res.array() == 1./(res.rows()*res.cols()));
+  std::cout << nep << "\n" << (res.array() != .25).select(nep,res) << std::endl;
 
   return 0;
 }

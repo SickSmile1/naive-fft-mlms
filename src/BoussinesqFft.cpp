@@ -56,8 +56,8 @@ void transformToReal(cMatrix& Umn_tild, matrix& Umn) { // NOLINT
                             reinterpret_cast<fftw_complex*>
                             (Umn_tild.data()),
                             Umn.data(), FFTW_ESTIMATE);
-  // fftw_execute(p3);
-  Umn = Umn_tild.real();
+  fftw_execute(p3);
+  // Umn = Umn_tild.real();
   fftw_destroy_plan(p3);
 }
 
