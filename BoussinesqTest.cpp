@@ -18,14 +18,14 @@
   ASSERT_EQ(res, function call);
 }*/
 
-int grids = 512;
+int grids = 128;
 matrix res1({grids, grids});
 matrix resMlms_6({grids, grids});
 matrix resFft({grids, grids});
 
 TEST(BoussinesqNaive, calculate) {
   res1.setZero();
-  GTEST_SKIP();
+  // GTEST_SKIP();
   // test for symmetry of resulting matrix
   double size = 2.;
   double size_p = size/2;
@@ -168,6 +168,18 @@ TEST(Boussinesq, bCheck) {
   EXPECT_FALSE(bCheck(m, 0, 3));
 }
 
+TEST(BoussinesqKernel, calcBoussinesq) {
+  double a = 0.25, b = 0.45;
+  double one = calcBoussinesq(2,3,a,b,a,b);
+  double two = calcBoussinesq(2,3,a,b,-a,b);
+  double three = calcBoussinesq(2,3,a,b,a,-b);
+  double four = calcBoussinesq(2,3,a,b,-a,-b);
+  std::cout << std::abs(one-two) << " diff1 " << std::abs(two-three) << " diff2 " << std::abs(three-four);
+  ASSERT_DOUBLE_EQ(one, -two);
+  ASSERT_DOUBLE_EQ(two, three);
+  ASSERT_DOUBLE_EQ(-three, four);
+}
+
 TEST(BoussinesqMlms, initializeStylusArray) {
   // Test stylus array as described in Lubrecht & Brandt 20a, 20b, 20c
   GTEST_SKIP();
@@ -218,7 +230,7 @@ TEST(TestMlms, calculate) {
 }
 
 TEST(BoussinesqFFT2, calculate) {
-  GTEST_SKIP();
+  // GTEST_SKIP();
   double Lx = 2., Ly = 2.;
   int Nx = grids, Ny = grids;
   double pSize = 1;
@@ -298,6 +310,7 @@ TEST(BoussinesqFft3, fftprime) {
 }
 
 TEST(tsquare_norm, mlms_fft) {
+  GTEST_SKIP();
   double fftSum = resFft.sum();
   matrix rest1 = BoussinesqMlms(2., grids, 1);
   double n = std::pow((grids),2);

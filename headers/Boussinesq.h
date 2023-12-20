@@ -13,14 +13,18 @@
 #include <string>
 #include <iomanip>
 #include <Eigen/Core>
+#include <Eigen/Sparse>
 
 namespace Eigen{
   typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdRM;
   typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXcRM;
+  typedef Eigen::SparseMatrix<double, Eigen::RowMajor> MatrixXsRM;
+  typedef Eigen::Triplet<double> T;
 }
 
 using matrix = Eigen::MatrixXdRM;
 using cMatrix = Eigen::MatrixXcRM;
+using sMatrix = Eigen::MatrixXsRM;
 
 // printing function for the data container
 template <class T>

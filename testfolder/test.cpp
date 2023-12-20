@@ -1,16 +1,35 @@
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Sparse>
 #include "Boussinesq.h"
 #include "eigen3/Eigen/SparseCore"
 #include <benchmark/benchmark.h>
 
 
 int main() {
-  matrix res = Eigen::MatrixXd::Ones(20,20);
-  matrix res2({10,10});
-  res.block(5,5,res2.rows(), res2.cols()) = res2;
-  res *= (1./(res.rows()*res.cols()));
-  auto nep = (res.array() == 1./(res.rows()*res.cols()));
-  std::cout << nep << "\n" << (res.array() != .25).select(nep,res) << std::endl;
+  typedef Eigen::Triplet<double> T;
+  std::vector<T> tripletList;
+  
+  for(int k = 3; k < 6; k++) {
+    tripletList.push_back(T(k, k,5));
+  }
+  Eigen::SparseMatrix<double,Eigen::RowMajor> t({10,10});
+  t.setFromTriplets(tripletList.begin(), tripletList.end());
+  // std::cout << t << std::endl;
+  matrix s({10,10});
+  s.setIdentity();
+  matrix q = (s.array() > 0.).select(s,t.toDense());
+  sMatrix sq = q.sparseView();
+  std::cout << sq << std::endl;
+  //matrix r = s.array().reverse();
+  //Eigen::SparseMatrix<double,Eigen::RowMajor> q = r.sparseView();
+  //q = q.cwiseProduct(t);
+  /*for (std::size_t i = 0; i < q.rows(); i++) {
+    for(std::size_t j = 0; j < q.cols();j++) {
+      std::cout << q(i,j) << "\t";
+    }
+    std::cout << std::endl;
+  }*/
+  // std::cout << q << std::endl;
 
   return 0;
 }

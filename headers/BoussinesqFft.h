@@ -16,7 +16,7 @@ void multiplyTransformed(cMatrix& Gmn_tild, cMatrix& Umn_tild, // NOLINT
 
 void transformToReal(cMatrix& Umn_tild, matrix& Umn); // NOLINT
 
-void writeToResultArray(const matrix& Umn, matrix& Umn_res); // NOLINT
+void writeToResultArray(matrix& Umn, matrix& Umn_res); // NOLINT
 
 /* initialize with centered pressure patch*/
 matrix BoussinesqFFT(const double size, const int grid);

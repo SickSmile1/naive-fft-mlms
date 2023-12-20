@@ -1,9 +1,11 @@
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Sparse>
 #include <numeric>
 #include "BoussinesqFft.h"
 #include "Boussinesq.h"
+#include "BoussinesqMlms.h" 
 
-int gMean(const matrix& mat, const matrix& gap);
+double gMean(sMatrix& gap, std::vector<Eigen::T>& idc);
 matrix make_sphere(double radius, int grid, double size, double center);
 void ccg(matrix& sub, matrix& topo, double offset, double gradient);
 
@@ -15,6 +17,7 @@ int main() {
   double size = 6., radius = 3.;
   matrix surf = make_sphere(radius,nx,size,radius);
   matrix sub({nx,nx});
+  // writeToFile(surf, "surf");
   ccg(sub, surf,.1,.1e-5);
   return 0;
 }
@@ -22,38 +25,55 @@ int main() {
 void ccg(matrix& sub, matrix& topo, double offset, double gradient) {
   int i = sub.rows();
   int j = sub.cols();
+
+  std::vector<Eigen::T> indices;
+
   matrix zeros = Eigen::MatrixXd::Zero(i,j);
-  matrix g_ij = zeros;
-  matrix t_ij = zeros;
+  matrix g_ij = zeros, t_ij = zeros, h_ij = zeros;
+  h_ij(i/2,j/2) = -5;
+  h_ij(i/2+1,j/2) = -5;
   matrix p_ij = Eigen::MatrixXd::Zero(2*i-1,2*j-1);
-  double delta = 0.;
-  double G_old = 1.0;
+  double delta = 0., G_old = 1.0;
   double eps0 = 5e-5, eps = 1.;
-  // std::cout << p_ij.rows() << " : " << p_ij.cols() << std::endl;
-  // std::cout << sub.rows() << " : " << sub.cols() << std::endl;
   while (eps > eps0) {
     matrix nd = BoussinesqFFT(6.0, p_ij, topo);
-    std::cout << nd << std::endl;
-    // writeToFile(nd, "fft_sphere");
-    matrix gap = - nd - topo;
-    double g_mean = gMean(nd, gap);
-    std::cout << g_mean << std::endl;
+    // matrix nd = BoussinesqMlms(6.0,p_ij, topo, 2);
+    matrix gap = nd - h_ij;
+    gap = (gap.array() > 0).select(gap, 0);
+    sMatrix sgap = gap.sparseView();
+    double g_mean = gMean(sgap, indices);
+    sgap.coeffs() -= g_mean;
+    double G = sgap.coeffs().square().sum();
+    std::cout << G << std::endl;
+    t_ij = gap + (delta * (G/G_old) * t_ij);
+
+    /*sMatrix temp_t_ij(i,j);
+    temp_t_ij.setFromTriplets(indices.begin(), indices.end());
+    // std::cout << temp_t_ij << std::endl;
+    G_old = G;
+    matrix r_ij = BoussinesqFFT(6., p_ij, temp_t_ij);
+    // std::cout << r_ij << std::endl;
+    double r_mean = gMean(nd, r_ij, indices);
+
+    r_ij.array() = r_ij.array() - r_mean;
+    double upper = temp_t_ij.cwiseProduct(gap).sum();
+    double lower = temp_t_ij.cwiseProduct(r_ij).sum();
+    double roh = upper/lower;
+    std::cout << upper << "/"<< lower<<" roh:"<< roh << std::endl;*/
     eps = 0;
   }
 }
 
-int gMean(const matrix& mat, const matrix& gap) {
-  int Nc = 0;
+double gMean(sMatrix& gap, std::vector<Eigen::T>& idc) {
   double g_kl = 0;
-  for (std::size_t k = 0; k < mat.rows(); k++) {
-    for (std::size_t l = 0; l < mat.cols(); l++) {
-      bool val = (mat(k,l)>0);
-      Nc += val;
-      double ret = val*mat(k,l);
-      g_kl += ret * gap(k,l);
+  // std::cout << gap << std::endl;
+  for (std::size_t k = 0; k < gap.outerSize(); k++) {
+    for (Eigen::SparseMatrix<double, Eigen::RowMajor>::InnerIterator it(gap,k);it;++it) {
+      g_kl += it.value();
     }
   }
-  return Nc*g_kl;
+  std::cout << "NC: "<< gap.nonZeros() << " g_kl: "<<g_kl << std::endl;
+  return std::pow(gap.nonZeros(),-1.)*g_kl;
 }
 
 matrix make_sphere(double radius, int grid, double size, double center) {
