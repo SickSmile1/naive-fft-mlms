@@ -118,16 +118,14 @@ matrix BoussinesqFFT(const double size, const int grid) {
   int ub = Ny/2+(pSize/dy)/2;
   matrix tempP({Nx, Ny});
   initializePressureArray(tempP, lb, ub, 1.);
-  matrix Gmn({(2*Nx)-1, (2*Ny)-1});
-  return BoussinesqFFT(size, Gmn, tempP);
+  return BoussinesqFFT(size, tempP);
 }
 
-matrix BoussinesqFFT(const double size, matrix& surf, const matrix& topo) {
-  matrix Gmn = Eigen::MatrixXd(surf);
-  matrix tempP = Eigen::MatrixXd(topo);
+matrix BoussinesqFFT(const double size, const matrix& topo) {
+  matrix Gmn({(2*topo.rows())-1, (2*topo.cols())-1});
 
   double Lx = size, Ly = size;
-  int Nx = tempP.rows(), Ny = tempP.cols();
+  int Nx = topo.rows(), Ny = topo.cols();
   double dx = (Lx/Nx);
   double dy = (Ly/Ny);
   // std::cout << "physical size: " << (Lx*Ly)/(Ny*Nx) << std::endl;
@@ -136,9 +134,9 @@ matrix BoussinesqFFT(const double size, matrix& surf, const matrix& topo) {
   cMatrix p_tild({Gmn.rows(), Gmn.cols()/2+1});
   matrix Umn({Gmn.rows(), Gmn.cols()});
   cMatrix Umn_tild({Gmn.rows(), Gmn.cols()/2+1});
-  matrix Umn_res({tempP.rows(), tempP.cols()});
+  matrix Umn_res({topo.rows(), topo.cols()});
 
-  copyPressureArray(p, tempP);
+  copyPressureArray(p, topo);
 
   calculateGmn(Gmn, dx, dy);
 

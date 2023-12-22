@@ -21,6 +21,6 @@ void writeToResultArray(matrix& Umn, matrix& Umn_res); // NOLINT
 /* initialize with centered pressure patch*/
 matrix BoussinesqFFT(const double size, const int grid);
 /* calculate with ready surface and topography*/
-matrix BoussinesqFFT(const double size, matrix& surf, const matrix& topo);
+matrix BoussinesqFFT(const double size, const matrix& topo);
 
 #endif  // BOUSSINESQFFT_H_

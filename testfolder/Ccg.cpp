@@ -4,7 +4,7 @@
 #include "eigen3/Eigen/Sparse"
 
 void ccg(matrix sub, matrix topo, double offset, double gradient) {
-  matrix nodDeflections = BoussinesqFFT(2.0, sub, topo);
+  matrix nodDeflections = BoussinesqFFT(2.0, topo);
   int i = nodDeflections.rows();
   int j = nodDeflections.cols();
   matrix g_ij({i,j}); g_ij = Eigen::MatrixXd::Zero(i,j);
