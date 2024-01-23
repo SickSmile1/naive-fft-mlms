@@ -1,6 +1,18 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
+
+import matplotlib.ticker as ticker
+
+
+#plt.rcParams['font.family'] = "sans-serif"
+plt.rcParams['font.sans-serif'] = 'Arial'
+plt.rcParams["axes.formatter.use_mathtext"] = True
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+
 means = np.loadtxt("res_l2", delimiter="\t")
 t_min2 = means[:,0]
 t_max2 = means[:,1]
@@ -25,9 +37,12 @@ t = 1/np.sqrt(t)
 plt.title("L2 norm")
 plt.plot(t, t_mean2,'b')
 plt.plot(t, t_mean2,'b^')
+
+ax.xaxis.set_major_locator(ticker.MultipleLocator(.02))
+
 plt.ylabel("L2-norm", fontsize=16)
 plt.xlabel(r'$\frac{1}{\sqrt{N}}$', fontsize=16)
-plt.legend(["L2"])
+plt.legend(["L2",r'$n^2$'])
 plt.tight_layout()
 plt.savefig('l2_err.pdf')  
 plt.show()
