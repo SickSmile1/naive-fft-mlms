@@ -8,54 +8,59 @@
 
 
 int main() {
-  int nx = 32;
+  int nx = 16;
   double size = 6., radius = 3., pixel = size/nx;
   matrix surf = make_sphere(radius,nx,size,radius);
   matrix sub({nx,nx});
   // writeToFile(surf, "surf");
-  ccg(sub, surf,.1,.1e-5, pixel);
+  ccg(sub, surf,15.,.1e-5, pixel);
   return 0;
 }
 
 void ccg(matrix& sub, matrix& topo, double offset, double gradient, double pixel) {
   int i = sub.rows();
   int j = sub.cols();
-
+  double ext_force = offset;
+  std::cout << "Pixel: " << pixel << std::endl;
   Eigen::Index maxRow, maxCol;
   double max = topo.minCoeff(&maxRow, &maxCol);
 
   matrix zeros = Eigen::MatrixXd::Zero(i,j);
-  matrix g_ij = zeros, t_ij = zeros, h_ij = zeros, gap = zeros, p_ij = zeros;
+  matrix g_ij = zeros, t_ij = zeros, h_ij = zeros, gap = zeros;
   // p_ij(maxRow, maxCol) = -max;
   sMatrix old_p_ij, sr_ij;
+  matrix p_ij = sub;
+  h_ij.array() = topo.array();
+  // std::cout << h_ij << std::endl;
 
-  h_ij.array() = -topo.array()+ 5e-5;
-  std::cout << h_ij << std::endl;
-
-  double P0 = topo.sum()*pixel*pixel;
+  double P0 = 15.;// topo.sum()*pixel*pixel;
   double delta = 0., G_old = 1.0;
-  double eps0 = 5e-5, eps = 1.;
+  double eps0 = 5e-5, eps = 3.;
   while (eps > eps0) {
     /* 21 */
-    matrix nd = BoussinesqFFT(6.0, topo);
+    matrix nd = BoussinesqFFT(6.0, p_ij);
 
     // matrix nd = BoussinesqMlms(6.0,p_ij, topo, 2);
     // std::cout << nd << std::endl;
-    gap = -nd - h_ij;
-    // std::cout << gap << std::endl;
-    gap = (gap.array() > 0).select(gap, 0);
+    // gap = nd - h_ij;
+    gap.array() = -nd.array() - ext_force;
+    std::cout << "pij: \n" << nd << std::endl;
+    gap = (p_ij.array() != 0).select(gap, 0); // <- this is wrong... we need p_ij>0 or the contact area
+    std::cout << "gap: \n" << gap << std::endl;
     sMatrix sgap = gap.sparseView();
     double g_mean = gMean(sgap);
     sgap.coeffs() -= g_mean;
     /* 22 */
     double G = sgap.coeffs().square().sum();
-
+    std::cout << "G: " << G << std::endl;
     /* 23, set t_ij \in Ic by multiplication with sparse sgap */
     t_ij = sgap + (delta * (G/G_old) * t_ij);
     G_old = G;
 
+    std::cout << "t_ij: \n" << t_ij << std::endl;
     /* 24 */
     matrix r_ij = BoussinesqFFT(6., t_ij);
+    std::cout << "rij: \n" << r_ij << std::endl;
 
     /* 25 */
     r_ij = (r_ij.array() > 0).select(r_ij, 0);
@@ -81,20 +86,25 @@ void ccg(matrix& sub, matrix& topo, double offset, double gradient, double pixel
     typedef Eigen::Triplet<double> T;
     std::vector<T> tripletList;
     delta = Iol(p_ij, sgap, tripletList) ? 1 : 0;
-    // std::cout << "delta: " << delta << std::endl;
+    std::cout << "delta: " << delta << std::endl;
 
     /* 30 */
     for (auto it: tripletList) {
       p_ij(it.row(),it.col()) -= roh*it.value();
       // std::cout << "-roh"<< std::endl;
     }
-    double P1 = p_ij.sum()*pixel*pixel;
-    p_ij.array() = (P1/P0)*p_ij.array();
-    
+
+    double P1 = p_ij.sum(); // pixel*pixel;
+    if (P1 == 0) {
+      p_ij.array() = p_ij.array() - (ext_force/ (i*j) );
+      std::cout << "want to add some value \n" << p_ij << std::endl;
+    } else {
+      p_ij.array() = (P1/P0)*p_ij.array();
+    }
+    ext_force = p_ij.sum() / p_ij.outerSize();
     // std::cout << p_ij << std::endl;
     double eps_test = pixel*pixel *std::pow(P0,-1) * (p_ij-old_p_ij).cwiseAbs().sum();
-    std::cout << "eps: " <<  eps_test << " iter:" << eps << std::endl;
-    topo = p_ij;
+    // std::cout << "eps: " <<  eps_test << " iter:" << eps << std::endl;
     eps -= 1;
   }
 }

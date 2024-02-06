@@ -1,12 +1,19 @@
-#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include "Boussinesq.h"
 #include "eigen3/Eigen/SparseCore"
 #include <benchmark/benchmark.h>
+#include <vector>
 
 
 int main() {
+  matrix t = Eigen::MatrixXd::Ones(10,10);
+  matrix s = Eigen::MatrixXd::Zero(10,10);
   typedef Eigen::Triplet<double> T;
+  std::vector<bool> idc = {false,true,true,false};
+
+  // std::cout << t(idc) << std::endl;
+  /*typedef Eigen::Triplet<double> T;
   std::vector<T> tripletList;
   
   for(int k = 3; k < 6; k++) {
@@ -19,7 +26,7 @@ int main() {
   s.setIdentity();
   matrix q = (s.array() > 0.).select(s,t.toDense());
   sMatrix sq = q.sparseView();
-  std::cout << sq << std::endl;
+  std::cout << sq << std::endl;*/
   //matrix r = s.array().reverse();
   //Eigen::SparseMatrix<double,Eigen::RowMajor> q = r.sparseView();
   //q = q.cwiseProduct(t);
