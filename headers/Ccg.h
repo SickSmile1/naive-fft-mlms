@@ -5,6 +5,7 @@
 #include "Boussinesq.h"
 #include "BoussinesqMlms.h" 
 
+void breaks();
 double gMean(sMatrix& gap);
 matrix make_sphere(double radius, int grid, double size, double center);
 void ccg(matrix& sub, matrix& topo, double offset, double gradient, double pixel);
