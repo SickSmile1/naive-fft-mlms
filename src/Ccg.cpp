@@ -98,9 +98,11 @@ void ccg(matrix& sub, matrix& topo, double offset, double gradient, double pixel
     std::cout << "delta: " << delta << std::endl;
 
     /* 30 */
-    for (auto it: tripletList) {
-      p_ij(it.row(),it.col()) -= roh*it.value();
-      // std::cout << "-roh"<< std::endl;
+    if (delta==0){
+      for (auto it: tripletList) {
+        p_ij(it.row(),it.col()) -= roh*it.value();
+        // std::cout << "-roh"<< std::endl;
+      }
     }
 
     double P1 = p_ij.sum(); // pixel*pixel;
