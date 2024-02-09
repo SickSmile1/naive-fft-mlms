@@ -16,7 +16,8 @@
 #include <Eigen/Sparse>
 
 namespace Eigen{
-  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdRM;
+  // typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdRM;
+  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatrixXdRM;
   typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXcRM;
   typedef Eigen::SparseMatrix<double, Eigen::RowMajor> MatrixXsRM;
   typedef Eigen::Triplet<double> T;
