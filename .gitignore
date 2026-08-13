@@ -1,6 +1,6 @@
 # Prerequisites
 *.d
-
+*.ipynb linguist-documentation=true
 # Compiled Object files
 *.slo
 *.lo
